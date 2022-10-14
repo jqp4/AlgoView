@@ -1,9 +1,9 @@
 function main() {
-    const canvas = document.querySelector('#c');
+    const canvas = document.querySelector("#c");
     const renderer = new THREE.WebGLRenderer({ canvas });
 
     const fov = 100;
-    const aspect = 2;  // холст по умолчанию
+    const aspect = 2; // холст по умолчанию
     const near = 0.1;
     const far = 5;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -12,7 +12,7 @@ function main() {
     const scene = new THREE.Scene();
 
     {
-        const color = 0xFFFFFF;
+        const color = 0xffffff;
         const intensity = 1;
         const light = new THREE.DirectionalLight(color, intensity);
         light.position.set(-1, 2, 4);
@@ -23,10 +23,13 @@ function main() {
     // const boxHeight = 1;
     // const boxDepth = 1;
     // const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
-    const geometry = new THREE.SphereGeometry(1, 20, 20)
+    const geometry = new THREE.SphereGeometry(1, 20, 20);
 
     function makeInstance(geometry, color, x) {
-        const material = new THREE.MeshPhongMaterial({ color: color, flatShading: true, });
+        const material = new THREE.MeshPhongMaterial({
+            color: color,
+            flatShading: true,
+        });
 
         const cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
@@ -44,8 +47,8 @@ function main() {
     function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;
         const pixelRatio = window.devicePixelRatio;
-        const width = canvas.clientWidth * pixelRatio | 0;
-        const height = canvas.clientHeight * pixelRatio | 0;
+        const width = (canvas.clientWidth * pixelRatio) | 0;
+        const height = (canvas.clientHeight * pixelRatio) | 0;
         const needResize = canvas.width !== width || canvas.height !== height;
         if (needResize) {
             renderer.setSize(width, height, false);
@@ -63,7 +66,7 @@ function main() {
         }
 
         cubes.forEach((cube, ndx) => {
-            const speed = 1 + ndx * .1;
+            const speed = 1 + ndx * 0.1;
             const rot = time * speed;
             cube.rotation.x = rot;
             cube.rotation.y = rot;
