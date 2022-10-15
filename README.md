@@ -1,6 +1,6 @@
 # AlgoView
 
-## WebGL
+## WebGL (old)
 
 * <https://github.com/sessamekesh/IndigoCS-webgl-tutorials>
 * <https://habr.com/ru/post/112430/>
@@ -14,8 +14,8 @@
 * <https://github.com/mrdoob/three.js/tree/master/examples>
 * <https://threejs.org/examples/#webgl_camera>
 * <https://stemkoski.github.io/Three.js/>
-* <>
 
 ## Материалы
 
-Исходная работа Никиты - <https://github.com/VolkovNikita94/Flask_ss>
+* Исходная работа Никиты - <https://github.com/VolkovNikita94/Flask_ss>
+* Пример работы системы - <https://algoload.parallel.ru/receive_task?username=ucmc2022ss317&graph_name=variants_165.xml>
