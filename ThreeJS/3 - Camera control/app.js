@@ -91,6 +91,16 @@ function main() {
         scene.add(mesh);
     }
 
+    // центр куб
+    {
+        const cubeSize = 0.5;
+        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        const cubeMat = new THREE.MeshPhongMaterial({ color: "red" });
+        const mesh = new THREE.Mesh(cubeGeo, cubeMat);
+        // mesh.position.set(cubeSize + 1, cubeSize / 2, 0);
+        scene.add(mesh);
+    }
+
     // сфера
     {
         const sphereRadius = 3;
@@ -107,17 +117,44 @@ function main() {
         scene.add(mesh);
     }
 
+    // конус
+    {
+        // https://customizer.github.io/three.js-doc.ru/geometries/coneBufferGeometry.htm
+
+        const coneRadius = 1;
+        const coneHeight = 3;
+        const coneRadiusSegments = 16;
+
+        var coneGeo = new THREE.ConeGeometry(
+            coneRadius,
+            coneHeight,
+            coneRadiusSegments
+        );
+
+        const coneMat = new THREE.MeshPhongMaterial({
+            // flatShading: true,
+            color: "#CA8",
+        });
+        const mesh = new THREE.Mesh(coneGeo, coneMat);
+        mesh.position.set(0, coneHeight / 2, -5);
+        scene.add(mesh);
+    }
+
     // свет
     {
         const color = 0xffffff;
         const intensity = 1;
         const light = new THREE.DirectionalLight(color, intensity);
-        light.position.set(0, 10, 0);
+        light.position.set(0, 10, 2);
         light.target.position.set(-5, 0, 0);
         scene.add(light);
         scene.add(light.target);
-    }
 
+        // https://www.youtube.com/watch?v=T6PhV4Hz0u4
+        const ambientIntensity = 0.2;
+        const ambientlight = new THREE.AmbientLight(color, ambientIntensity);
+        scene.add(ambientlight);
+    }
 
     function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;

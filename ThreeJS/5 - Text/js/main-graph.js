@@ -2,16 +2,15 @@
 
 //import THREE from "./three.min";
 
-var container = document.getElementById("container");
+let container = document.getElementById("container");
 
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(
     60,
     window.innerWidth / window.innerHeight,
     0.1,
     400
 );
-
 // var camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 1, 1000 );
 camera.position.set(100, 40, 20);
 var frustumSize = 1000;
@@ -33,6 +32,8 @@ var colors = [
 var resolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
 var graph = new THREE.Object3D();
 scene.add(graph);
+
+let instance;
 
 init();
 render();
@@ -113,21 +114,75 @@ function createLines() {
     line.vertices.push(new THREE.Vector3(-30, -30, 30));
     makeLine(line, 3);
 
-    // сфера на конце OX
-    {
-        const sphereRadius = 2;
-        const sphereWidthDivisions = 32;
-        const sphereHeightDivisions = 16;
-        const sphereGeo = new THREE.SphereGeometry(
-            sphereRadius,
-            sphereWidthDivisions,
-            sphereHeightDivisions
-        );
-        const sphereMat = new THREE.MeshPhongMaterial({ color: "#CA8" });
-        const mesh = new THREE.Mesh(sphereGeo, sphereMat);
-        mesh.position.set(30, -30, -30);
-        // graph.add(mesh);
-    }
+    // new THREE.TextGeometry( text, parameters );
+
+    // {
+    //     var text = new THREE.MeshText2D("RIGHT", {
+    //         // align: THREE.textAlign.right,
+    //         font: "30px Arial",
+    //         fillStyle: "#000000",
+    //         antialias: true,
+    //     });
+
+    //     graph.add(text);
+    // }
+
+    // сфера
+    // {
+    //     const sphereRadius = 3;
+    //     const sphereWidthDivisions = 32;
+    //     const sphereHeightDivisions = 16;
+    //     const sphereGeo = new THREE.SphereGeometry(
+    //         sphereRadius,
+    //         sphereWidthDivisions,
+    //         sphereHeightDivisions
+    //     );
+    //     // const sphereMat = new THREE.MeshPhongMaterial({ color: "#CA8" });
+
+    //     const sphereMat = new TextGeometry("Hello three.js!", {
+    //         font: font,
+    //         size: 80,
+    //         height: 5,
+    //         curveSegments: 12,
+    //         bevelEnabled: true,
+    //         bevelThickness: 10,
+    //         bevelSize: 8,
+    //         bevelOffset: 0,
+    //         bevelSegments: 5,
+    //     });
+
+    //     const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+    //     mesh.position.set(30, -30, -30);
+    //     graph.add(mesh);
+    // }
+
+    
+         instance = new THREE.TextSprite({
+            alignment: "center",
+            backgroundColor: "rgba(0,0,0,0)",
+            color: "#fff",
+            fontFamily: "sans-serif",
+            fontSize: 10,
+            fontStyle: "normal",
+            fontVariant: "normal",
+            fontWeight: "normal",
+            lineGap: 0.25,
+            padding: 0.5,
+            strokeColor: "#fff",
+            strokeWidth: 0,
+            text: "999",
+        });
+
+        // instance.position.set(-30, -30, -30);
+        // let p = camera.position;
+        // let d = camera.quaternion;
+        // let ps = [p.x.toFixed(2), p.y.toFixed(2), p.z.toFixed(2)];
+        // let ds = [d.x.toFixed(2), d.y.toFixed(2), d.z.toFixed(2)];
+
+        // instance.text = [ps, ds].join("\n");
+
+        graph.add(instance);
+    
 }
 
 onWindowResize();
@@ -155,7 +210,13 @@ window.addEventListener("resize", onWindowResize);
 function render() {
     requestAnimationFrame(render);
     controls.update();
-    graph.rotation.y += 0.25 * clock.getDelta();
+    // graph.rotation.y += 0.25 * clock.getDelta();
+    let p = camera.position;
+    let d = camera.quaternion;
+    let ps = [p.x.toFixed(2), p.y.toFixed(2), p.z.toFixed(2)];
+    let ds = [d.x.toFixed(2), d.y.toFixed(2), d.z.toFixed(2)];
+
+    instance.text = [ps, ds].join("\n");
 
     renderer.render(scene, camera);
 }
