@@ -5,13 +5,13 @@
 let container = document.getElementById("container");
 
 let scene = new THREE.Scene();
-// let camera = new THREE.PerspectiveCamera(
-//     60,
-//     window.innerWidth / window.innerHeight,
-//     0.1,
-//     400
-// );
-var camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 1, 1000 );
+let camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    400
+);
+// camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 1, 1000 );
 camera.position.set(100, 40, 20);
 var frustumSize = 1000;
 
@@ -23,7 +23,7 @@ container.appendChild(renderer.domElement);
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 var clock = new THREE.Clock();
 
-var axisSize = 60
+var axisSize = 60;
 var colors = [
     0xed6a5a, 0xf4f1bb, 0x9bc1bc, 0x5ca4a9, 0xe6ebe0, 0xf0b67f, 0xfe5f55,
     0xd6d1b1, 0xc7efcf, 0xeef5db, 0x50514f, 0xf25f5c, 0xffe066, 0x247ba0,
@@ -63,8 +63,6 @@ function init() {
     createVertices();
     createEdges();
 }
-
-
 
 function createSphere(x, y, z, color_index) {
     const sphereRadius = 3;
@@ -262,12 +260,11 @@ function createAxis() {
     // makeLine(line, 1);
 }
 
-function createAxisText(){
-    var fontSize = 6
-    var instance = new THREE.TextSprite({
+function textParameters(text, fontSize) {
+    return {
         alignment: "center",
         backgroundColor: "rgba(0,0,0,0)",
-        color: "#fff",
+        color: "#000000",
         fontFamily: "sans-serif",
         fontSize: fontSize,
         fontStyle: "normal",
@@ -277,15 +274,29 @@ function createAxisText(){
         padding: 0.5,
         strokeColor: "#fff",
         strokeWidth: 0,
-        text: "x",
-    });
+        text: text,
+    };
+}
 
-    instance.position.set(axisSize + fontSize / 2, 0, 0);
+function createAxisText() {
+    const fontSize = 6;
+    const axisPos = axisSize + fontSize / 1.5;
 
-    graph.add(instance);
-    // instance.position.set(-30, 30, -30);
+    var parameters_x = textParameters("x", fontSize);
+    var parameters_y = textParameters("y", fontSize);
+    var parameters_z = textParameters("z", fontSize);
 
-    // graph.add(instance);
+    var label_x = new THREE.TextSprite(parameters_x);
+    var label_y = new THREE.TextSprite(parameters_y);
+    var label_z = new THREE.TextSprite(parameters_z);
+
+    label_x.position.set(axisPos, 0, 0);
+    label_y.position.set(0, axisPos, 0);
+    label_z.position.set(0, 0, axisPos);
+
+    graph.add(label_x);
+    graph.add(label_y);
+    graph.add(label_z);
 }
 
 function creatrLight() {
@@ -302,8 +313,6 @@ function creatrLight() {
     const ambientlight = new THREE.AmbientLight(color, ambientIntensity);
     scene.add(ambientlight);
 }
-
-
 
 onWindowResize();
 
