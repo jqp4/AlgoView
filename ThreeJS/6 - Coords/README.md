@@ -1,4 +1,4 @@
-# 4 - MeshLine
+# 6 - Coords
 
 Материал - <https://github.com/SeregPie/THREE.TextSprite>
 
