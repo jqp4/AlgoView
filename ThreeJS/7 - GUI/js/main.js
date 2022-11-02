@@ -1,7 +1,5 @@
 "use strict";
 
-//import THREE from "./three.min";
-
 let container = document.getElementById("container");
 
 let scene = new THREE.Scene();
@@ -39,23 +37,15 @@ class Params {
     constructor() {
         this.curves = true;
         this.circles = false;
-        this.amount = 100;
         this.lineWidth = 10;
-        this.dashArray = 0.6;
-        this.dashOffset = 0;
-        this.dashRatio = 0.5;
         this.taper = "parabolic";
         this.strokes = false;
         this.sizeAttenuation = false;
-        this.animateWidth = false;
-        this.spread = false;
-        this.autoRotate = true;
+        this.autoRotate = false;
         this.autoUpdate = true;
-        this.animateVisibility = false;
-        this.animateDashOffset = false;
         this.update = function () {
             clearScene();
-            createLines();
+            init();
         };
     }
 }
@@ -73,10 +63,7 @@ window.addEventListener("load", function () {
 
     gui.add(params, "curves").onChange(update);
     gui.add(params, "circles").onChange(update);
-    gui.add(params, "amount", 1, 1000).onChange(update);
     gui.add(params, "lineWidth", 1, 20).onChange(update);
-    gui.add(params, "dashArray", 0, 3).onChange(update);
-    gui.add(params, "dashRatio", 0, 1).onChange(update);
     gui.add(params, "taper", ["none", "linear", "parabolic", "wavy"]).onChange(
         update
     );
@@ -84,11 +71,9 @@ window.addEventListener("load", function () {
     gui.add(params, "sizeAttenuation").onChange(update);
     gui.add(params, "autoUpdate").onChange(update);
     gui.add(params, "update");
-    gui.add(params, "animateWidth");
-    gui.add(params, "spread");
-    gui.add(params, "autoRotate");
-    gui.add(params, "animateVisibility");
-    gui.add(params, "animateDashOffset");
+    gui.add(params, "autoRotate").onChange(function () {
+        clock.getDelta();
+    });
 
     // var loader = new THREE.TextureLoader();
     // loader.load("assets/stroke.png", function (texture) {
@@ -116,7 +101,7 @@ function makeLine(geo, c) {
         opacity: 1,
         resolution: resolution,
         sizeAttenuation: false,
-        lineWidth: 10,
+        lineWidth: 5,
     });
     var mesh = new THREE.Mesh(g.geometry, material);
     graph.add(mesh);
@@ -218,18 +203,23 @@ function createArrow(sourceVector3, targetVector3) {
     var y = targetVector3.y - sourceVector3.y;
     var z = targetVector3.z - sourceVector3.z;
 
-    var len = Math.sqrt(Math.pow(x), Math.pow(y), Math.pow(z));
-    x = x / len;
-    y = y / len;
-    z = z / len;
+    var alpha = y == 0 ? (Math.sign(z) * Math.PI) / 2 : Math.atan(z / y); // поворот вокруг оси OX
+    var beta = z == 0 ? (Math.sign(x) * Math.PI) / 2 : Math.atan(x / z); //  поворот вокруг оси OY
+    var gamma = x == 0 ? (Math.sign(y) * Math.PI) / 2 : Math.atan(y / x); // поворот вокруг оси OZ
 
-    // a =
+    console.log(x, y, z);
+    console.log(alpha, beta, gamma);
 
-    var coneSourceVector3 = new THREE.Vector3(
-        targetVector3.x - x,
-        targetVector3.y - y,
-        targetVector3.z - z
-    );
+    // var len = Math.sqrt(Math.pow(x), Math.pow(y), Math.pow(z));
+    // x = x / len;
+    // y = y / len;
+    // z = z / len;
+
+    // var coneSourceVector3 = new THREE.Vector3(
+    //     targetVector3.x - x,
+    //     targetVector3.y - y,
+    //     targetVector3.z - z
+    // );
 
     // конус
 
@@ -248,26 +238,18 @@ function createArrow(sourceVector3, targetVector3) {
 
     const coneMat = new THREE.MeshPhongMaterial({
         // flatShading: true,
-        color: "#CA8",
+        // color: "#CA8",
+        color: colors[3],
     });
     const mesh = new THREE.Mesh(coneGeo, coneMat);
     mesh.position.set(targetVector3.x, targetVector3.y, targetVector3.z);
+    // mesh.position.set(0, coneHeight/2, 0);
 
-    mesh.rotation.x = 1;
+    mesh.rotation.x = alpha;
+    mesh.rotation.z = -beta;
+    mesh.rotation.y = gamma;
 
     graph.add(mesh);
-
-    // const dir = new THREE.Vector3( 1, 2, 0 );
-
-    // //normalize the direction vector (convert to vector of length 1)
-    // dir.normalize();
-
-    // const origin = new THREE.Vector3( 0, 0, 0 );
-    // const length = 10;
-    // const hex = 0xffff00;
-
-    // const arrowHelper = new THREE.ArrowHelper( dir, origin, length );
-    // graph.add( arrowHelper );
 }
 
 function createLines() {
@@ -275,10 +257,6 @@ function createLines() {
     line.vertices.push(new THREE.Vector3(-30, -30, -30));
     line.vertices.push(new THREE.Vector3(30, -30, -30));
     makeLine(line, 3);
-    // createArrow(
-    //     new THREE.Vector3(-30, -30, -30),
-    //     new THREE.Vector3(30, -30, -30)
-    // );
 
     var line = new THREE.Geometry();
     line.vertices.push(new THREE.Vector3(-30, -30, -30));
@@ -300,32 +278,18 @@ function createLines() {
 }
 
 function createAxis() {
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, 0));
-    line.vertices.push(new THREE.Vector3(60, 0, 0));
-    makeLine(line, 3);
-    // createArrow(
-    //     new THREE.Vector3(-30, -30, -30),
-    //     new THREE.Vector3(30, -30, -30)
-    // );
+    createArrow(new THREE.Vector3(0, 0, 0), new THREE.Vector3(60, 0, 0));
+    createArrow(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 60, 0));
+    createArrow(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 60));
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, 0));
-    line.vertices.push(new THREE.Vector3(0, 60, 0));
-    makeLine(line, 3);
-
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, 0));
-    line.vertices.push(new THREE.Vector3(0, 0, 60));
-    makeLine(line, 3);
-
-    // var line = new Float32Array(600);
-    // for (var j = 0; j < 200 * 3; j += 3) {
-    //     line[j] = -30 + 0.1 * j;
-    //     line[j + 1] = 5 * Math.sin(0.01 * j) * Math.cos(0.005 * j);
-    //     line[j + 2] = 0;
+    // куб 0 0 0
+    // {
+    //     const cubeSize = 0.2;
+    //     const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+    //     const cubeMat = new THREE.MeshPhongMaterial({ color: colors[3] });
+    //     const mesh = new THREE.Mesh(cubeGeo, cubeMat);
+    //     graph.add(mesh);
     // }
-    // makeLine(line, 1);
 }
 
 function textParameters(text, fontSize) {
@@ -347,8 +311,8 @@ function textParameters(text, fontSize) {
 }
 
 function createAxisText() {
-    const fontSize = 6;
-    const axisPos = axisSize + fontSize / 1.5;
+    const fontSize = 5;
+    const axisPos = axisSize + fontSize;
 
     var parameters_x = textParameters("x", fontSize);
     var parameters_y = textParameters("y", fontSize);
@@ -407,6 +371,10 @@ window.addEventListener("resize", onWindowResize);
 function render() {
     requestAnimationFrame(render);
     controls.update();
+
+    if (params.autoRotate) {
+        graph.rotation.y += 0.25 * clock.getDelta();
+    }
 
     renderer.render(scene, camera);
 }
