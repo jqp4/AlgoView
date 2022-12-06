@@ -1,15 +1,14 @@
 import json
 
+# root = '/Users/gleb/Projects/AlgoView/ThreeJS/7 - GUI/data/'
+root = './'
 
-root = '/Users/gleb/Projects/AlgoView/ThreeJS/6 - Coords/'
-
-
-f = open(root + 'data.json')
-data = str(json.load(f)).replace("\'", "\"" )
+f = open(root + 'trial_json_full.json', 'r')
+data = str(json.load(f)).replace("\'", "\"")
 # print(data)
 f.close()
 
 
-f = open(root + "js/data.js", "w")
-f.write(f"data = \'{data}\'")
+f = open(root + 'data.js', 'w')
+f.write(f'data = \'{data}\'')
 f.close()
