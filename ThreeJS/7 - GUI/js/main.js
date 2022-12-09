@@ -110,7 +110,7 @@ class Vertex {
         } else if (this.type == "1") {
             createOctahedron(this.pos.x, this.pos.y, this.pos.z, 2);
         } else {
-            // будет позже
+            // будет позже возможно 
         }
     }
 }
@@ -150,6 +150,8 @@ class Edge {
     buildEdgeObject() {
         createArrow(this.sourceVertex.pos, this.targetVertex.pos, 6);
     }
+
+
 }
 
 class AlgoView {
@@ -208,13 +210,12 @@ function init() {
     createLight();
     createVertices();
     createEdges();
-
     createAxis();
     createAxisText();
 
+    // createLight();
     // createArrowsTest();
     // createAxisText();
-    // createLight();
 }
 
 function createSphere(x, y, z, colorIndex) {
@@ -298,7 +299,7 @@ function createEdges() {
     }
 }
 
-function createArrowOld(sourceVector3, targetVector3, colorIndex = 3) {
+function createArrowOld1(sourceVector3, targetVector3, colorIndex = 3) {
     var line = new THREE.Geometry();
     line.vertices.push(sourceVector3);
     line.vertices.push(targetVector3);
@@ -365,7 +366,7 @@ function createArrowOld(sourceVector3, targetVector3, colorIndex = 3) {
     graph.add(mesh);
 }
 
-function createArrow(sourceVector3, targetVector3, colorIndex = 3) {
+function createArrowOld2(sourceVector3, targetVector3, colorIndex = 3) {
     // var line = new THREE.Geometry();
     // line.vertices.push(sourceVector3);
     // line.vertices.push(targetVector3);
@@ -392,25 +393,43 @@ function createArrow(sourceVector3, targetVector3, colorIndex = 3) {
     const later = 0;
 
     // поворот вокруг оси OX
-    var alpha = y == 0 ? (Math.sign(z) * Math.PI) / 2 : -Math.atan(z / y);
+    var alpha = (() => {
+        // if (y == 0) return Math.PI / 2;
+        return Math.atan(z / y); // + (y > 0 ? 0 : Math.PI);
+    })();
+
+    // поворот вокруг оси OY
+    var beta = (() => {
+        // if (y == 0) return Math.PI / 2;
+        return 0.5; //Math.atan(x / z); // + (y > 0 ? 0 : Math.PI);
+    })();
 
     // поворот вокруг оси OZ
-    var beta =
-        x == 0
-            ? y == 0
-                ? z == 0
-                    ? 0
-                    : later
-                : z == 0
-                ? Math.atan(x / y)
-                : later
-            : y == 0
-            ? z == 0
-                ? (Math.sign(x) * Math.PI) / 2
-                : later
-            : z == 0
-            ? Math.atan(x / y) + Math.PI // ТОЛЬКО ЭТО ТОЧНО ПРОВЕРИЛ (x, y != 0, z = 0)
-            : later;
+    var gamma = (() => {
+        // if (y == 0) return Math.PI / 2;
+        return -Math.atan(x / y) + (y > 0 ? 0 : Math.PI);
+    })();
+
+    // const sum = alpha + gamma;
+    // alpha /= sum;
+    // gamma /= sum;
+
+    // var beta =
+    //     x == 0
+    //         ? y == 0
+    //             ? z == 0
+    //                 ? 0
+    //                 : later
+    //             : z == 0
+    //             ? Math.atan(x / y)
+    //             : later
+    //         : y == 0
+    //         ? z == 0
+    //             ? (Math.sign(x) * Math.PI) / 2
+    //             : later
+    //         : z == 0
+    //         ? Math.atan(x / y) + (y < 0 ? Math.PI : 0) // ТОЛЬКО ЭТО ТОЧНО ПРОВЕРИЛ (x, y != 0, z = 0)
+    //         : later;
 
     // поворот вокруг чего-то ой
     // var gamma = x == 0 ? (Math.sign(y) * Math.PI) / 2 : Math.atan(y / x);
@@ -451,13 +470,13 @@ function createArrow(sourceVector3, targetVector3, colorIndex = 3) {
     // mesh.position.set(0, coneHeight/2, 0);
 
     mesh.rotation.x = alpha;
-    // mesh.rotation.y = gamma;
-    mesh.rotation.z = -beta;
+    mesh.rotation.y = beta;
+    mesh.rotation.z = gamma;
 
     graph.add(mesh);
 }
 
-function createArrowLookAt(sourceVector3, targetVector3, colorIndex = 3) {
+function createArrowOld3_LookAt(sourceVector3, targetVector3, colorIndex = 3) {
     var line = new THREE.Geometry();
     line.vertices.push(sourceVector3);
     line.vertices.push(targetVector3);
@@ -525,6 +544,184 @@ function createArrowLookAt(sourceVector3, targetVector3, colorIndex = 3) {
     graph.add(mesh);
 }
 
+function createArrowOld4(sourceVector3, targetVector3, colorIndex = 3) {
+    // var line = new THREE.Geometry();
+    // line.vertices.push(sourceVector3);
+    // line.vertices.push(targetVector3);
+    // makeLine(line, colorIndex);
+
+    const x = targetVector3.x - sourceVector3.x;
+    const y = targetVector3.y - sourceVector3.y;
+    const z = targetVector3.z - sourceVector3.z;
+
+    const shiftLength = 2.9;
+    const vectorLength = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
+    const shift = [
+        (x * shiftLength) / vectorLength,
+        (y * shiftLength) / vectorLength,
+        (z * shiftLength) / vectorLength,
+    ];
+
+    const croppedTargetVector3 = new THREE.Vector3(
+        targetVector3.x - shift[0],
+        targetVector3.y - shift[1],
+        targetVector3.z - shift[2]
+    );
+
+    const later = 0;
+
+    // поворот вокруг оси OX
+    var alpha = (() => {
+        // if (y == 0) return Math.PI / 2;
+        // return Math.atan(z / y); // + (y > 0 ? 0 : Math.PI);
+        return Math.asin(z / vectorLength);
+    })();
+
+    // поворот вокруг оси OY
+    var beta = (() => {
+        // if (y == 0) return Math.PI / 2;
+        // return Math.atan(x / z); // + (y > 0 ? 0 : Math.PI);
+        return 0;
+    })();
+
+    // поворот вокруг оси OZ
+    var gamma = (() => {
+        // if (y == 0) return Math.PI / 2;
+        // return -Math.atan(x / y) + (y > 0 ? 0 : Math.PI);
+        return -Math.atan(x / y);
+    })();
+
+    // const sum = alpha + gamma;
+    // alpha /= sum;
+    // gamma /= sum;
+
+    // var beta =
+    //     x == 0
+    //         ? y == 0
+    //             ? z == 0
+    //                 ? 0
+    //                 : later
+    //             : z == 0
+    //             ? Math.atan(x / y)
+    //             : later
+    //         : y == 0
+    //         ? z == 0
+    //             ? (Math.sign(x) * Math.PI) / 2
+    //             : later
+    //         : z == 0
+    //         ? Math.atan(x / y) + (y < 0 ? Math.PI : 0) // ТОЛЬКО ЭТО ТОЧНО ПРОВЕРИЛ (x, y != 0, z = 0)
+    //         : later;
+
+    // поворот вокруг чего-то ой
+    // var gamma = x == 0 ? (Math.sign(y) * Math.PI) / 2 : Math.atan(y / x);
+
+    // линия
+
+    var line = new THREE.Geometry();
+    line.vertices.push(sourceVector3);
+    line.vertices.push(croppedTargetVector3);
+    makeLine(line, colorIndex);
+
+    // конус
+    // https://customizer.github.io/three.js-doc.ru/geometries/coneBufferGeometry.htm
+    // https://threejs.org/docs/#api/en/geometries/ConeGeometry
+
+    const coneRadius = 0.8; // 1.5;
+    const coneHeight = 2; // 4;
+    const coneRadiusSegments = 16;
+
+    var coneGeo = new THREE.ConeGeometry(
+        coneRadius,
+        coneHeight,
+        coneRadiusSegments
+    );
+
+    const coneMat = new THREE.MeshPhongMaterial({
+        // flatShading: true,
+        // color: "#CA8",
+        color: colors[colorIndex],
+    });
+
+    const mesh = new THREE.Mesh(coneGeo, coneMat);
+    mesh.position.set(
+        targetVector3.x - shift[0],
+        targetVector3.y - shift[1],
+        targetVector3.z - shift[2]
+    );
+    // mesh.position.set(0, coneHeight/2, 0);
+
+    mesh.rotation.x = alpha;
+    // mesh.rotation.y = beta;
+    // mesh.rotation.z = gamma;
+
+    graph.add(mesh);
+}
+
+function createArrow(sourceVector3, targetVector3, colorIndex = 3) {
+    const x = targetVector3.x - sourceVector3.x;
+    const y = targetVector3.y - sourceVector3.y;
+    const z = targetVector3.z - sourceVector3.z;
+
+    const shiftLength = 2.9;
+    const vectorLength = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
+
+    const shift = new THREE.Vector3(
+        (x * shiftLength) / vectorLength,
+        (y * shiftLength) / vectorLength,
+        (z * shiftLength) / vectorLength
+    );
+
+    const croppedTargetVector3 = new THREE.Vector3(
+        targetVector3.x - shift.x,
+        targetVector3.y - shift.y,
+        targetVector3.z - shift.z
+    );
+
+    // линия
+    const line = new THREE.Geometry();
+    line.vertices.push(sourceVector3);
+    line.vertices.push(croppedTargetVector3);
+    makeLine(line, colorIndex);
+
+    const coneMesh = getConeMesh(colorIndex);
+    coneMesh.rotation.x = Math.PI / 2;
+
+    const cone = new THREE.Object3D();
+    cone.add(coneMesh);
+    cone.position.set(
+        croppedTargetVector3.x,
+        croppedTargetVector3.y,
+        croppedTargetVector3.z
+    );
+
+    cone.lookAt(targetVector3.x, targetVector3.y, targetVector3.z);
+    graph.add(cone);
+}
+
+function getConeMesh(colorIndex = 3) {
+    // конус
+    // https://customizer.github.io/three.js-doc.ru/geometries/coneBufferGeometry.htm
+    // https://threejs.org/docs/#api/en/geometries/ConeGeometry
+
+    const coneRadius = 0.8; // 1.5;
+    const coneHeight = 2; // 4;
+    const coneRadiusSegments = 16;
+
+    var coneGeo = new THREE.ConeGeometry(
+        coneRadius,
+        coneHeight,
+        coneRadiusSegments
+    );
+
+    const coneMat = new THREE.MeshPhongMaterial({
+        // flatShading: true,
+        // color: "#CA8",
+        color: colors[colorIndex],
+    });
+
+    return new THREE.Mesh(coneGeo, coneMat);
+}
+
 function createLines() {
     var line = new THREE.Geometry();
     line.vertices.push(new THREE.Vector3(-30, -30, -30));
@@ -576,9 +773,14 @@ function createAxis() {
     // }
 }
 
-function createArrowsTest() {
+function createArrowsTest_old() {
     const n = 5;
-    const l = params.axisLength;
+    const l = 50;
+
+    var xMaxPos = l;
+    var yMaxPos = l;
+    var zMaxPos = l;
+
     const v0 = new THREE.Vector3(0, 0, 0);
 
     // arrows
@@ -615,56 +817,158 @@ function createArrowsTest() {
 
     // lines
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, 0));
-    line.vertices.push(new THREE.Vector3(l, 0, 0));
-    makeLine(line, 6);
+    {
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, 0));
+        line.vertices.push(new THREE.Vector3(l, 0, 0));
+        makeLine(line, 6);
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, 0));
-    line.vertices.push(new THREE.Vector3(0, l, 0));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, 0));
+        line.vertices.push(new THREE.Vector3(0, l, 0));
+        makeLine(line, 6);
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, 0));
-    line.vertices.push(new THREE.Vector3(0, 0, l));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, 0));
+        line.vertices.push(new THREE.Vector3(0, 0, l));
+        makeLine(line, 6);
 
-    //
+        //
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(l, 0, 0));
-    line.vertices.push(new THREE.Vector3(l, l, 0));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(l, 0, 0));
+        line.vertices.push(new THREE.Vector3(l, l, 0));
+        makeLine(line, 6);
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(l, 0, 0));
-    line.vertices.push(new THREE.Vector3(l, 0, l));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(l, 0, 0));
+        line.vertices.push(new THREE.Vector3(l, 0, l));
+        makeLine(line, 6);
 
-    //
+        //
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, l, 0));
-    line.vertices.push(new THREE.Vector3(l, l, 0));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, l, 0));
+        line.vertices.push(new THREE.Vector3(l, l, 0));
+        makeLine(line, 6);
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, l, 0));
-    line.vertices.push(new THREE.Vector3(0, l, l));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, l, 0));
+        line.vertices.push(new THREE.Vector3(0, l, l));
+        makeLine(line, 6);
 
-    //
+        //
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, l));
-    line.vertices.push(new THREE.Vector3(0, l, l));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, l));
+        line.vertices.push(new THREE.Vector3(0, l, l));
+        makeLine(line, 6);
 
-    var line = new THREE.Geometry();
-    line.vertices.push(new THREE.Vector3(0, 0, l));
-    line.vertices.push(new THREE.Vector3(l, 0, l));
-    makeLine(line, 6);
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, l));
+        line.vertices.push(new THREE.Vector3(l, 0, l));
+        makeLine(line, 6);
+    }
+}
+
+function createArrowsTest() {
+    const n = 20;
+    const l = 30;
+
+    var xMaxPos = l;
+    var yMaxPos = l;
+    var zMaxPos = l;
+
+    const v0 = new THREE.Vector3(0, 0, 0);
+
+    // arrows
+
+    for (let i = 0; i < n; i++) {
+        const a = ((Math.PI * 2) / n) * i;
+        const x = l * Math.sin(a);
+        const y = l * Math.cos(a);
+
+        createArrow(v0, new THREE.Vector3(x, y, 40));
+    }
+
+    // for (let i = 0; i < n; i++) {
+    //     const a = (l / n) * i;
+    //     createArrow(v0, new THREE.Vector3(l, 0, a));
+    // }
+
+    // for (let i = 0; i < n; i++) {
+    //     const a = (l / n) * i;
+    //     createArrow(v0, new THREE.Vector3(a, l, 0));
+    // }
+
+    // for (let i = 0; i < n; i++) {
+    //     const a = (l / n) * i;
+    //     createArrow(v0, new THREE.Vector3(0, l, a));
+    // }
+
+    // for (let i = 0; i < n; i++) {
+    //     const a = (l / n) * i;
+    //     createArrow(v0, new THREE.Vector3(a, 0, l));
+    // }
+
+    // for (let i = 0; i < n; i++) {
+    //     const a = (l / n) * i;
+    //     createArrow(v0, new THREE.Vector3(0, a, l));
+    // }
+
+    // lines
+    {
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, 0));
+        line.vertices.push(new THREE.Vector3(l, 0, 0));
+        makeLine(line, 6);
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, 0));
+        line.vertices.push(new THREE.Vector3(0, l, 0));
+        makeLine(line, 6);
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, 0));
+        line.vertices.push(new THREE.Vector3(0, 0, l));
+        makeLine(line, 6);
+
+        //
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(l, 0, 0));
+        line.vertices.push(new THREE.Vector3(l, l, 0));
+        makeLine(line, 6);
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(l, 0, 0));
+        line.vertices.push(new THREE.Vector3(l, 0, l));
+        makeLine(line, 6);
+
+        //
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, l, 0));
+        line.vertices.push(new THREE.Vector3(l, l, 0));
+        makeLine(line, 6);
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, l, 0));
+        line.vertices.push(new THREE.Vector3(0, l, l));
+        makeLine(line, 6);
+
+        //
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, l));
+        line.vertices.push(new THREE.Vector3(0, l, l));
+        makeLine(line, 6);
+
+        var line = new THREE.Geometry();
+        line.vertices.push(new THREE.Vector3(0, 0, l));
+        line.vertices.push(new THREE.Vector3(l, 0, l));
+        makeLine(line, 6);
+    }
 }
 
 function textParameters(text, fontSize) {
