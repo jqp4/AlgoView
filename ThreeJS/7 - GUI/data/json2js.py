@@ -9,6 +9,6 @@ data = str(json.load(f)).replace("\'", "\"")
 f.close()
 
 
-f = open(root + 'data.js', 'w')
-f.write(f'data = \'{data}\'')
+f = open(root + 'jsonGraphData.js', 'w')
+f.write(f'jsonGraphData = \'{data}\'')
 f.close()

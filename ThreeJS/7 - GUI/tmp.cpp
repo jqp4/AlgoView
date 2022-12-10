@@ -4,6 +4,8 @@ struct Param {
   int end;
 }
 
+const bool debug_mode = true;
+
 class Params {
 
 public:
@@ -15,11 +17,13 @@ public:
 
   add_param(String name, int start_value, int start_value) {
     assert(n < 3, "Пока только трехмерные графы");
-    params[n] = Param{
-        name,
-        start_value,
-        start_value,
-    };
+
+    if (debug_mode)
+      std::cout << "in add_param, обработка n" params[n] = Param{
+          name,
+          start_value,
+          start_value,
+      };
 
     n++;
   }
