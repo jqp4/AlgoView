@@ -464,6 +464,9 @@ class GraphicObjects {
     }
 }
 
+/** начало построения MVVM */
+class AlgoViewModel {}
+
 function clearScene() {
     scene.remove(graph);
     graph = new THREE.Object3D();
