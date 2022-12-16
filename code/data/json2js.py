@@ -1,8 +1,15 @@
+import os
 import json
 
-# root = '/Users/gleb/Projects/AlgoView/ThreeJS/7 - GUI/data/'
-root = './'
+# /Users/gleb/Projects/AlgoView/code/data/json2js.py
 
+try:
+    os.chdir("./code/data/")
+except:
+    pass
+
+
+root = './'
 f = open(root + 'trial_json_full.json', 'r')
 data = str(json.load(f)).replace("\'", "\"")
 # print(data)

@@ -64,59 +64,10 @@ class Vertex {
         this.id = id;
         this.pos = new THREE.Vector3(x, y, z);
         this.type = type;
-
-        this.buildVertexObject();
-    }
-
-    buildVertexObject() {
-        switch (this.type) {
-            case "0": {
-                GraphicObjects.createSphere(
-                    this.pos.x,
-                    this.pos.y,
-                    this.pos.z,
-                    1
-                );
-                break;
-            }
-            case "1": {
-                GraphicObjects.createOctahedron(
-                    this.pos.x,
-                    this.pos.y,
-                    this.pos.z,
-                    2
-                );
-                break;
-            }
-            default: {
-                GraphicObjects.createSphere(
-                    this.pos.x,
-                    this.pos.y,
-                    this.pos.z,
-                    1
-                );
-                break;
-            }
-        }
     }
 }
 
 class Edge {
-    // /**
-    //  *
-    //  * @param {number} id
-    //  * @param {number} sourceVertexId
-    //  * @param {number} targetVertexId
-    //  * @param {string} type
-    //  */
-    // constructor(id, sourceVertexId, targetVertexId, type) {
-    //     this.id = id;
-    //     this.sourceVertexId = sourceVertexId;
-    //     this.type = type;
-
-    //     this.buildVertexObject();
-    // }
-
     /**
      *
      * @param {number} id
@@ -129,16 +80,6 @@ class Edge {
         this.sourceVertex = sourceVertex;
         this.targetVertex = targetVertex;
         this.type = type;
-
-        this.buildEdgeObject();
-    }
-
-    buildEdgeObject() {
-        GraphicObjects.createArrow(
-            this.sourceVertex.pos,
-            this.targetVertex.pos,
-            6
-        );
     }
 }
 
@@ -159,10 +100,6 @@ class Graph {
         for (let i = 0; i < this.graphData.vertices.length; i++) {
             const element = this.graphData.vertices[i];
 
-            // const x = element.coordinates[0];
-            // const y = element.coordinates[1];
-            // const z = element.coordinates[2];
-
             const vertex = new Vertex(
                 element.id,
                 element.coordinates[0],
@@ -179,8 +116,6 @@ class Graph {
     createEdges() {
         for (let i = 0; i < this.graphData.edges.length; i++) {
             const element = this.graphData.edges[i];
-
-            // console.log(element)
 
             const edge = new Edge(
                 element.id,
@@ -204,20 +139,6 @@ class Graph {
         });
 
         return sizeVector3;
-    }
-}
-
-class AlgoView {
-    constructor(graphData) {
-        this.graph = new Graph(graphData);
-        this.setAxisLengths();
-    }
-
-    setAxisLengths() {
-        const axisShift = 15;
-        this.oxAxisLength = this.graph.size.x + axisShift;
-        this.oyAxisLength = this.graph.size.y + axisShift;
-        this.ozAxisLength = this.graph.size.z + axisShift;
     }
 }
 
@@ -464,8 +385,133 @@ class GraphicObjects {
     }
 }
 
-/** начало построения MVVM */
-class AlgoViewModel {}
+class DataLoader {
+    constructor() {
+        this.emptyGraphDataTemplate = { vertices: [], edges: [] };
+        this.graphData = this.emptyGraphDataTemplate;
+    }
+
+    loadGraphData() {
+        // jsonGraphData загружена в html страничке
+        this.graphData = JSON.parse(jsonGraphData);
+
+        return this.graphData;
+    }
+}
+
+/** Модель в MVC */
+class Model {
+    constructor() {
+        const dataLoader = new DataLoader();
+        const graphData = dataLoader.loadGraphData();
+        this.graph = new Graph(graphData);
+    }
+}
+
+/** Представление в MVC */
+class View {
+    /**
+     * @param {Model} modelContext
+     */
+    constructor(modelContext) {
+        this.modelContext = modelContext;
+
+        this.updateGraphSize();
+        this.setupSceneView();
+        this.setupGraphView();
+    }
+
+    updateGraphSize() {
+        const axisShift = 15;
+        const graphSize = this.modelContext.graph.size;
+
+        this.oxAxisLength = graphSize.x + axisShift;
+        this.oyAxisLength = graphSize.y + axisShift;
+        this.ozAxisLength = graphSize.z + axisShift;
+
+        this.oxCenterOfGraph = (10 - graphSize.x) / 2;
+        this.oyCenterOfGraph = (10 - graphSize.y) / 2;
+        this.ozCenterOfGraph = (10 - graphSize.z) / 2;
+    }
+
+    setupSceneView() {
+        GraphicObjects.createLight();
+        GraphicObjects.createAxis(
+            this.oxAxisLength,
+            this.oyAxisLength,
+            this.ozAxisLength
+        );
+
+        scene.position.set(
+            this.oxCenterOfGraph,
+            this.oyCenterOfGraph,
+            this.ozCenterOfGraph
+        );
+    }
+
+    setupGraphView() {
+        this.modelContext.graph.vertices.forEach((vertex, _, __) =>
+            this.buildVertexObject(vertex)
+        );
+
+        this.modelContext.graph.edges.forEach((edge, _, __) =>
+            this.buildEdgeObject(edge)
+        );
+    }
+
+    /**
+     * Построение 3D объекта вершины на сцене
+     * @param {Vertex} vetrex
+     */
+    buildVertexObject(vetrex) {
+        switch (vetrex.type) {
+            case "0": {
+                GraphicObjects.createSphere(
+                    vetrex.pos.x,
+                    vetrex.pos.y,
+                    vetrex.pos.z,
+                    1
+                );
+                break;
+            }
+            case "1": {
+                GraphicObjects.createOctahedron(
+                    vetrex.pos.x,
+                    vetrex.pos.y,
+                    vetrex.pos.z,
+                    2
+                );
+                break;
+            }
+            default: {
+                GraphicObjects.createSphere(
+                    vetrex.pos.x,
+                    vetrex.pos.y,
+                    vetrex.pos.z,
+                    1
+                );
+                break;
+            }
+        }
+    }
+
+    /**
+     * Построение 3D объекта ребра на сцене
+     * @param {Edge} edge
+     */
+    buildEdgeObject(edge) {
+        GraphicObjects.createArrow(
+            edge.sourceVertex.pos,
+            edge.targetVertex.pos,
+            6
+        );
+    }
+}
+
+/** Контроллер в MVC (пока пустой)*/
+class Controller {
+    constructor() {}
+}
 
 function clearScene() {
     scene.remove(graph);
@@ -473,9 +519,9 @@ function clearScene() {
     scene.add(graph);
 }
 
-function setUpEventListeners() {
+function setupEventListeners() {
     /** Настройка GUI */
-    function setUpGUI() {
+    function setupGUI() {
         function update() {
             if (params.autoUpdate) {
                 clearScene();
@@ -528,35 +574,19 @@ function setUpEventListeners() {
         resolution.set(w, h);
     }
 
-    window.addEventListener("load", setUpGUI);
+    window.addEventListener("load", setupGUI);
     window.addEventListener("resize", onWindowResize);
 }
 
 function init() {
-    // console.log(jsonGraphData);
-
-    const graphData = JSON.parse(jsonGraphData);
-    const algoView = new AlgoView(graphData);
-
-    GraphicObjects.createLight();
-    GraphicObjects.createAxis(
-        algoView.oxAxisLength,
-        algoView.oyAxisLength,
-        algoView.ozAxisLength
-    );
-
-    scene.position.set(
-        (10 - algoView.graph.size.x) / 2,
-        (10 - algoView.graph.size.y) / 2,
-        (10 - algoView.graph.size.z) / 2
-    );
-
-    // createLight();
-    // createArrowsTest();
-    // createAxisText();
+    const model = new Model();
+    const view = new View(model);
+    const controller = new Controller();
 }
 
 function createArrowsTest() {
+    GraphicObjects.createLight();
+    GraphicObjects.createAxisText();
     const n = 20;
     const l = 30;
 
@@ -641,6 +671,6 @@ function render() {
     renderer.render(scene, camera);
 }
 
-setUpEventListeners();
+setupEventListeners();
 init();
 render();
