@@ -1,49 +1,9 @@
 "use strict";
 
-let container = document.getElementById("container");
-
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    400
-);
-// camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 1, 1000 );
-camera.position.set(100, 40, 20);
-let frustumSize = 1000;
-
-let renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-container.appendChild(renderer.domElement);
-
-let controls = new THREE.OrbitControls(camera, renderer.domElement);
-let clock = new THREE.Clock();
-
-let resolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
-let graph = new THREE.Object3D();
-scene.add(graph);
-
-class Params {
-    constructor() {
-        this.curves = true;
-        this.circles = false;
-        this.lineWidth = 5;
-        this.taper = "parabolic";
-        this.strokes = false;
-        this.sizeAttenuation = false;
-        this.autoRotate = false;
-        this.autoUpdate = true;
-        this.update = function () {
-            clearScene();
-            init();
-        };
-    }
-}
-
-let params = new Params();
-let gui = new dat.GUI();
+const CameraTypes = {
+    perspective: "Perspective",
+    orthographic: "Orthographic",
+};
 
 const colors = [
     0xed6a5a, 0xf4f1bb, 0x9bc1bc, 0x5ca4a9, 0xe6ebe0, 0xf0b67f, 0xfe5f55,
@@ -51,6 +11,156 @@ const colors = [
     0x70c1b3,
 ];
 
+class Params {
+    constructor() {
+        this.autoRotate = false;
+
+        this.lineWidth = 5;
+        this.cameraType = CameraTypes.perspective;
+
+        // this.autoUpdate = true;
+        // this.update = function () {
+        //     config.clearScene();
+        //     initMVC();
+        // };
+        // this.rebuild = function () {
+        //     // config.clearScene();
+        //     config = new AlgoViewСonfiguration();
+        //     initMVC();
+        // };
+    }
+}
+
+class AlgoViewСonfiguration {
+    constructor() {
+        this.params = new Params();
+        this.configuringThreeJS();
+        // this.gui = new dat.GUI();
+        // this.setupEventListeners();
+    }
+
+    configuringThreeJS() {
+        this.container = document.getElementById("container");
+
+        this.scene = new THREE.Scene();
+
+        this.camera = this.createCamera();
+        this.camera.position.set(100, 40, 20);
+        this.frustumSize = 1000;
+
+        this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+        });
+
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.container.appendChild(this.renderer.domElement);
+
+        this.controls = new THREE.OrbitControls(
+            this.camera,
+            this.renderer.domElement
+        );
+        this.clock = new THREE.Clock();
+
+        this.resolution = new THREE.Vector2(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        this.graph = new THREE.Object3D();
+        this.scene.add(this.graph);
+    }
+
+    createCamera() {
+        if (this.params.cameraType == CameraTypes.perspective) {
+            return new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                400
+            );
+        } else {
+            return new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
+        }
+    }
+
+    /** Обработка изменения размера экрана */
+    onWindowResize() {
+        if ((this.params.cameraType = CameraTypes.perspective)) return;
+
+        const w = this.container.clientWidth;
+        const h = this.container.clientHeight;
+        const aspect = w / h;
+
+        this.camera.left = (-this.frustumSize * aspect) / 2;
+        this.camera.right = (this.frustumSize * aspect) / 2;
+        this.camera.bottom = -this.frustumSize / 2;
+        this.camera.top = this.frustumSize / 2;
+
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(w, h);
+        this.resolution.set(w, h);
+    }
+
+    /** Настройка GUI */
+    setupGUI() {
+        // this.gui
+        //     .add(this.params, "lineWidth", 1, 20)
+        //     .name("line width")
+        //     .onChange(update);
+        // this.gui
+        //     .add(this.params, "cameraType", [
+        //         CameraTypes.perspective,
+        //         CameraTypes.orthographic,
+        //     ])
+        //     .onChange(update);
+        // this.gui
+        //     .add(this.params, "autoRotate")
+        //     .name("auto rotate")
+        //     .onChange(function () {
+        //         config.clock.getDelta();
+        //     });
+        // this.gui.add(this.params, "update");
+        // gui.add(params, "update");
+        // gui.add(params, "axisLength", 40, 80).name("axis length").onChange(update);
+        // gui.add(params, "autoUpdate").onChange(update);
+        // let loader = new THREE.TextureLoader();
+        // loader.load("assets/stroke.png", function (texture) {
+        //     strokeTexture = texture;
+        //     init();
+        // });
+    }
+
+    setupEventListeners() {
+        window.addEventListener("load", config.setupGUI);
+        window.addEventListener("resize", config.onWindowResize);
+    }
+
+    clearScene() {
+        this.scene.remove(this.graph);
+        this.graph = new THREE.Object3D();
+        this.scene.add(this.graph);
+    }
+
+    // updateAll() {
+    //     if (params.autoUpdate) {
+    //         this.clearScene();
+    //         initMVC();
+    //     }
+    // }
+
+    renderFrame() {
+        console.log("in renderFrame");
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+let config = new AlgoViewСonfiguration();
+console.log(config);
+
+/** Модель одной вершины. */
 class Vertex {
     /**
      *
@@ -67,6 +177,7 @@ class Vertex {
     }
 }
 
+/** Модель одной дуги. */
 class Edge {
     /**
      *
@@ -83,6 +194,7 @@ class Edge {
     }
 }
 
+/** Модель графа, состоящего из вершин и дуг. */
 class Graph {
     vertices = new Map();
     edges = new Map();
@@ -142,6 +254,7 @@ class Graph {
     }
 }
 
+/** Набор инструментов создания графических объектов. */
 class GraphicObjects {
     static createMeshLineByGeo(geo, colorIndex) {
         const meshLine = new MeshLine();
@@ -151,13 +264,13 @@ class GraphicObjects {
             useMap: false,
             color: new THREE.Color(colors[colorIndex]),
             opacity: 1,
-            resolution: resolution,
+            resolution: config.resolution,
             sizeAttenuation: false,
-            lineWidth: params.lineWidth,
+            lineWidth: config.params.lineWidth,
         });
 
         const mesh = new THREE.Mesh(meshLine.geometry, material);
-        graph.add(mesh);
+        config.graph.add(mesh);
     }
 
     static createMeshLine(sourceVector3, targetVector3, colorIndex) {
@@ -172,13 +285,13 @@ class GraphicObjects {
             useMap: false,
             color: new THREE.Color(colors[colorIndex]),
             opacity: 1,
-            resolution: resolution,
+            resolution: config.resolution,
             sizeAttenuation: false,
-            lineWidth: params.lineWidth,
+            lineWidth: config.params.lineWidth,
         });
 
         const mesh = new THREE.Mesh(meshLine.geometry, material);
-        graph.add(mesh);
+        config.graph.add(mesh);
     }
 
     /** супер простая линия если понадобится */
@@ -190,7 +303,7 @@ class GraphicObjects {
         const material = new THREE.LineBasicMaterial({ color: 0x000000 });
         const line = new THREE.Line(geometry, material);
 
-        graph.add(line);
+        config.graph.add(line);
     }
 
     /**
@@ -221,7 +334,7 @@ class GraphicObjects {
 
         const mesh = new THREE.Mesh(sphereGeo, sphereMat);
         mesh.position.set(x, y, z);
-        graph.add(mesh);
+        config.graph.add(mesh);
     }
 
     static createOctahedron(x, y, z, colorIndex) {
@@ -235,7 +348,7 @@ class GraphicObjects {
 
         const mesh = new THREE.Mesh(octahedronGeo, octahedronMat);
         mesh.position.set(x, y, z);
-        graph.add(mesh);
+        config.graph.add(mesh);
     }
 
     static createArrow(sourceVector3, targetVector3, colorIndex = 3) {
@@ -273,7 +386,7 @@ class GraphicObjects {
         );
 
         cone.lookAt(targetVector3.x, targetVector3.y, targetVector3.z);
-        graph.add(cone);
+        config.graph.add(cone);
     }
 
     static getConeMesh(colorIndex = 3) {
@@ -364,9 +477,9 @@ class GraphicObjects {
         label_y.position.set(0, oyAxisLength + fontSize, 0);
         label_z.position.set(0, 0, ozAxisLength + fontSize);
 
-        graph.add(label_x);
-        graph.add(label_y);
-        graph.add(label_z);
+        config.graph.add(label_x);
+        config.graph.add(label_y);
+        config.graph.add(label_z);
     }
 
     static createLight() {
@@ -375,19 +488,21 @@ class GraphicObjects {
         const light = new THREE.DirectionalLight(color, intensity);
         light.position.set(0, 10, 2);
         light.target.position.set(-5, 0, 0);
-        graph.add(light);
-        graph.add(light.target);
+        config.graph.add(light);
+        config.graph.add(light.target);
 
         // https://www.youtube.com/watch?v=T6PhV4Hz0u4
         const ambientIntensity = 0.2;
         const ambientLight = new THREE.AmbientLight(color, ambientIntensity);
-        graph.add(ambientLight);
+        config.graph.add(ambientLight);
     }
 }
 
+/** Модель загрузки данных. */
 class DataLoader {
+    static emptyGraphDataTemplate = { vertices: [], edges: [] };
+
     constructor() {
-        this.emptyGraphDataTemplate = { vertices: [], edges: [] };
         this.graphData = this.emptyGraphDataTemplate;
     }
 
@@ -399,7 +514,10 @@ class DataLoader {
     }
 }
 
-/** Модель в MVC */
+/** Слой моделей и обработки данных в MVC.
+ *
+ * Содержит:
+ * * обработанные данные графа. */
 class Model {
     constructor() {
         const dataLoader = new DataLoader();
@@ -408,20 +526,27 @@ class Model {
     }
 }
 
-/** Представление в MVC */
+/** Слой представления в MVC.
+ *
+ * Содержит:
+ * * графическое представление графа;
+ * * отображение осей координат, названия осей;
+ * * настройку освещения.
+ */
 class View {
     /**
-     * @param {Model} modelContext
+     * @param {Model} modelContext - ссылка на слой модели, экземпляр класса `Model`.
      */
     constructor(modelContext) {
         this.modelContext = modelContext;
 
-        this.updateGraphSize();
+        this.updateSceneSize();
         this.setupSceneView();
         this.setupGraphView();
     }
 
-    updateGraphSize() {
+    /** Обновление размера сцены по осям */
+    updateSceneSize() {
         const axisShift = 15;
         const graphSize = this.modelContext.graph.size;
 
@@ -434,6 +559,7 @@ class View {
         this.ozCenterOfGraph = (10 - graphSize.z) / 2;
     }
 
+    /** Наполнение сцены светом, осями координат */
     setupSceneView() {
         GraphicObjects.createLight();
         GraphicObjects.createAxis(
@@ -442,13 +568,14 @@ class View {
             this.ozAxisLength
         );
 
-        scene.position.set(
+        config.scene.position.set(
             this.oxCenterOfGraph,
             this.oyCenterOfGraph,
             this.ozCenterOfGraph
         );
     }
 
+    /** Наполнение сцены 3D объктами, представляющими граф */
     setupGraphView() {
         this.modelContext.graph.vertices.forEach((vertex, _, __) =>
             this.buildVertexObject(vertex)
@@ -460,8 +587,8 @@ class View {
     }
 
     /**
-     * Построение 3D объекта вершины на сцене
-     * @param {Vertex} vetrex
+     * Построение 3D объекта вершины на сцене.
+     * @param {Vertex} vetrex - вершина, экземпляр класса `Vertex`.
      */
     buildVertexObject(vetrex) {
         switch (vetrex.type) {
@@ -496,8 +623,8 @@ class View {
     }
 
     /**
-     * Построение 3D объекта ребра на сцене
-     * @param {Edge} edge
+     * Построение 3D объекта ребра на сцене.
+     * @param {Edge} edge - ребро, экземпляр класса `Edge`.
      */
     buildEdgeObject(edge) {
         GraphicObjects.createArrow(
@@ -508,169 +635,110 @@ class View {
     }
 }
 
-/** Контроллер в MVC (пока пустой)*/
+/** Слой контроллера в MVC. (пока пустой)*/
 class Controller {
     constructor() {}
 }
 
-function clearScene() {
-    scene.remove(graph);
-    graph = new THREE.Object3D();
-    scene.add(graph);
-}
+// function createArrowsTest() {
+//     GraphicObjects.createLight();
+//     GraphicObjects.createAxisText();
+//     const n = 20;
+//     const l = 30;
 
-function setupEventListeners() {
-    /** Настройка GUI */
-    function setupGUI() {
-        function update() {
-            if (params.autoUpdate) {
-                clearScene();
-                init();
-            }
-        }
+//     xMaxPos = l;
+//     yMaxPos = l;
+//     zMaxPos = l;
 
-        // gui.add(params, "curves").onChange(update);
-        // gui.add(params, "circles").onChange(update);
-        gui.add(params, "lineWidth", 1, 20).name("line width").onChange(update);
-        // gui.add(params, "axisLength", 40, 80).name("axis length").onChange(update);
-        // gui.add(params, "taper", ["none", "linear", "parabolic", "wavy"]).onChange(
-        //     update
-        // );
-        // gui.add(params, "strokes").onChange(update);
-        // gui.add(params, "sizeAttenuation").onChange(update);
-        // gui.add(params, "autoUpdate").onChange(update);
+//     const v0 = new THREE.Vector3(0, 0, 0);
 
-        gui.add(params, "autoRotate")
-            .name("auto rotate")
-            .onChange(function () {
-                clock.getDelta();
-            });
+//     // arrows
+//     for (let i = 0; i < n; i++) {
+//         const a = ((Math.PI * 2) / n) * i;
+//         const x = l * Math.sin(a);
+//         const y = l * Math.cos(a);
 
-        gui.add(params, "update");
+//         GraphicObjects.createArrow(v0, new THREE.Vector3(x, y, 40));
+//     }
 
-        // let loader = new THREE.TextureLoader();
-        // loader.load("assets/stroke.png", function (texture) {
-        //     strokeTexture = texture;
-        //     init();
-        // });
-    }
+//     // lines
+//     {
+//         let line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(0, 0, 0));
+//         line.vertices.push(new THREE.Vector3(l, 0, 0));
+//         GraphicObjects.makeLineByGeo(line, 6);
 
-    /** Обработка изменения размера экрана */
-    function onWindowResize() {
-        let w = container.clientWidth;
-        let h = container.clientHeight;
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(0, 0, 0));
+//         line.vertices.push(new THREE.Vector3(0, l, 0));
+//         GraphicObjects.makeLineByGeo(line, 6);
 
-        let aspect = w / h;
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(0, 0, 0));
+//         line.vertices.push(new THREE.Vector3(0, 0, l));
+//         GraphicObjects.makeLineByGeo(line, 6);
 
-        camera.left = (-frustumSize * aspect) / 2;
-        camera.right = (frustumSize * aspect) / 2;
-        camera.top = frustumSize / 2;
-        camera.bottom = -frustumSize / 2;
+//         //
 
-        camera.updateProjectionMatrix();
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(l, 0, 0));
+//         line.vertices.push(new THREE.Vector3(l, l, 0));
+//         GraphicObjects.makeLineByGeo(line, 6);
 
-        renderer.setSize(w, h);
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(l, 0, 0));
+//         line.vertices.push(new THREE.Vector3(l, 0, l));
+//         GraphicObjects.makeLineByGeo(line, 6);
 
-        resolution.set(w, h);
-    }
+//         //
 
-    window.addEventListener("load", setupGUI);
-    window.addEventListener("resize", onWindowResize);
-}
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(0, l, 0));
+//         line.vertices.push(new THREE.Vector3(l, l, 0));
+//         GraphicObjects.makeLineByGeo(line, 6);
 
-function init() {
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(0, l, 0));
+//         line.vertices.push(new THREE.Vector3(0, l, l));
+//         GraphicObjects.makeLineByGeo(line, 6);
+
+//         //
+
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(0, 0, l));
+//         line.vertices.push(new THREE.Vector3(0, l, l));
+//         GraphicObjects.makeLineByGeo(line, 6);
+
+//         line = new THREE.Geometry();
+//         line.vertices.push(new THREE.Vector3(0, 0, l));
+//         line.vertices.push(new THREE.Vector3(l, 0, l));
+//         GraphicObjects.makeLineByGeo(line, 6);
+//     }
+// }
+
+function initMVC() {
     const model = new Model();
     const view = new View(model);
     const controller = new Controller();
 }
 
-function createArrowsTest() {
-    GraphicObjects.createLight();
-    GraphicObjects.createAxisText();
-    const n = 20;
-    const l = 30;
-
-    xMaxPos = l;
-    yMaxPos = l;
-    zMaxPos = l;
-
-    const v0 = new THREE.Vector3(0, 0, 0);
-
-    // arrows
-    for (let i = 0; i < n; i++) {
-        const a = ((Math.PI * 2) / n) * i;
-        const x = l * Math.sin(a);
-        const y = l * Math.cos(a);
-
-        GraphicObjects.createArrow(v0, new THREE.Vector3(x, y, 40));
-    }
-
-    // lines
-    {
-        let line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(0, 0, 0));
-        line.vertices.push(new THREE.Vector3(l, 0, 0));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(0, 0, 0));
-        line.vertices.push(new THREE.Vector3(0, l, 0));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(0, 0, 0));
-        line.vertices.push(new THREE.Vector3(0, 0, l));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        //
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(l, 0, 0));
-        line.vertices.push(new THREE.Vector3(l, l, 0));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(l, 0, 0));
-        line.vertices.push(new THREE.Vector3(l, 0, l));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        //
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(0, l, 0));
-        line.vertices.push(new THREE.Vector3(l, l, 0));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(0, l, 0));
-        line.vertices.push(new THREE.Vector3(0, l, l));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        //
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(0, 0, l));
-        line.vertices.push(new THREE.Vector3(0, l, l));
-        GraphicObjects.makeLineByGeo(line, 6);
-
-        line = new THREE.Geometry();
-        line.vertices.push(new THREE.Vector3(0, 0, l));
-        line.vertices.push(new THREE.Vector3(l, 0, l));
-        GraphicObjects.makeLineByGeo(line, 6);
-    }
-}
-
 function render() {
     requestAnimationFrame(render);
-    controls.update();
+    config.renderFrame();
 
-    if (params.autoRotate) {
-        graph.rotation.y += 0.25 * clock.getDelta();
-    }
-
-    renderer.render(scene, camera);
+    // config.controls.update();
+    // if (config.params.autoRotate) {
+    //     config.graph.rotation.y += 0.25 * config.clock.getDelta();
+    // }
+    // config.renderer.render(config.scene, config.camera);
 }
 
-setupEventListeners();
-init();
-render();
+function main() {
+    console.log("in main 1");
+    initMVC();
+    console.log("in main 2");
+    render();
+    console.log("in main 3");
+}
+
+main();
