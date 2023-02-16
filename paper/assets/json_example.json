@@ -1,0 +1,11 @@
+{
+    "vertices": [
+        { "id": 0, "coordinates": [10, 10, 10], "type": "1" },
+        { "id": 1, "coordinates": [10, 20, 10], "type": "0" },
+        { "id": 2, "coordinates": [10, 30, 10], "type": "0" }
+    ],
+    "edges": [
+        { "id": 0, "sourceVertexId": 1, "targetVertexId": 0 },
+        { "id": 1, "sourceVertexId": 2, "targetVertexId": 0 }
+    ]
+}

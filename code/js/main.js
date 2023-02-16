@@ -13,21 +13,10 @@ const colors = [
 
 class Params {
     constructor() {
+        this.pause = false;
         this.autoRotate = false;
-
         this.lineWidth = 5;
         this.cameraType = CameraTypes.perspective;
-
-        // this.autoUpdate = true;
-        // this.update = function () {
-        //     config.clearScene();
-        //     initMVC();
-        // };
-        // this.rebuild = function () {
-        //     // config.clearScene();
-        //     config = new AlgoViewСonfiguration();
-        //     initMVC();
-        // };
     }
 }
 
@@ -35,8 +24,25 @@ class AlgoViewСonfiguration {
     constructor() {
         this.params = new Params();
         this.configuringThreeJS();
-        // this.gui = new dat.GUI();
-        // this.setupEventListeners();
+        // this.setGraphRebuildCallback(function () {}); // устанавливаем пустую функцию
+        this.setControllerContext(123);
+
+        this.setupEventListeners();
+    }
+
+    /**
+     * Функция установски коллбека для обновления графа. Требуется
+     * так как иначе не получится связать GUI с тонкой перестройкой графа.
+     * @param {function} func - новая функция коллбека.
+     */
+    // setGraphRebuildCallback(func) {
+    //     this.graphRebuildCallback = func;
+    //     console.log("new graphRebuildCallback - ", this.graphRebuildCallback);
+    // }
+
+    setControllerContext(controllerContext) {
+        this.controllerContext = controllerContext;
+        console.log("new controllerContext - ", this.controllerContext);
     }
 
     configuringThreeJS() {
@@ -70,6 +76,9 @@ class AlgoViewСonfiguration {
 
         this.graph = new THREE.Object3D();
         this.scene.add(this.graph);
+
+        this.graphRotationY = 0;
+        this.updateGraphRotationY();
     }
 
     createCamera() {
@@ -83,6 +92,64 @@ class AlgoViewСonfiguration {
         } else {
             return new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
         }
+    }
+
+    // updateCamera() {
+    //     // this.camera.remove();
+    //     this.camera = this.createCamera();
+
+    //     this.controls = new THREE.OrbitControls(
+    //         this.camera,
+    //         this.renderer.domElement
+    //     );
+
+    //     this.controls.update();
+    // }
+
+    updateGraphRotationY() {
+        this.graph.rotation.y = this.graphRotationY;
+    }
+
+    rotateGraphByClock() {
+        this.graphRotationY += 0.25 * this.clock.getDelta();
+        this.updateGraphRotationY();
+    }
+
+    /** Настройка GUI */
+    setupGUI() {
+        this.gui = new dat.GUI();
+        const controllerContextTrans = this.controllerContext;
+        const rebuildSceneCallback = function () {
+            controllerContextTrans.rebuildScene();
+        };
+
+        const resetCameraCallback = function () {
+            controllerContextTrans.setNewCamera();
+        };
+
+        this.gui
+            .add(this.params, "lineWidth", 1, 15)
+            .name("Line width")
+            .onChange(rebuildSceneCallback);
+
+        // this.gui
+        //     .add(this.params, "cameraType", [
+        //         CameraTypes.perspective,
+        //         CameraTypes.orthographic,
+        //     ])
+        //     .name("Camera type")
+        //     .onChange(resetCameraCallback);
+
+        this.gui
+            .add(this.params, "autoRotate")
+            .name("auto rotate")
+            .onChange(function () {
+                config.clock.getDelta();
+            });
+
+        this.gui
+            .add(this.controllerContext, "rebuildScene")
+            .name("rebuild scene"); // .onChange(rebuildSceneCallback);
     }
 
     /** Обработка изменения размера экрана */
@@ -103,62 +170,34 @@ class AlgoViewСonfiguration {
         this.resolution.set(w, h);
     }
 
-    /** Настройка GUI */
-    setupGUI() {
-        // this.gui
-        //     .add(this.params, "lineWidth", 1, 20)
-        //     .name("line width")
-        //     .onChange(update);
-        // this.gui
-        //     .add(this.params, "cameraType", [
-        //         CameraTypes.perspective,
-        //         CameraTypes.orthographic,
-        //     ])
-        //     .onChange(update);
-        // this.gui
-        //     .add(this.params, "autoRotate")
-        //     .name("auto rotate")
-        //     .onChange(function () {
-        //         config.clock.getDelta();
-        //     });
-        // this.gui.add(this.params, "update");
-        // gui.add(params, "update");
-        // gui.add(params, "axisLength", 40, 80).name("axis length").onChange(update);
-        // gui.add(params, "autoUpdate").onChange(update);
-        // let loader = new THREE.TextureLoader();
-        // loader.load("assets/stroke.png", function (texture) {
-        //     strokeTexture = texture;
-        //     init();
-        // });
-    }
-
     setupEventListeners() {
-        window.addEventListener("load", config.setupGUI);
-        window.addEventListener("resize", config.onWindowResize);
+        // window.addEventListener("load", this.setupGUI());
+        window.addEventListener("resize", this.onWindowResize());
     }
 
     clearScene() {
         this.scene.remove(this.graph);
         this.graph = new THREE.Object3D();
         this.scene.add(this.graph);
+
+        this.updateGraphRotationY();
     }
 
-    // updateAll() {
-    //     if (params.autoUpdate) {
-    //         this.clearScene();
-    //         initMVC();
-    //     }
-    // }
-
     renderFrame() {
-        console.log("in renderFrame");
+        // console.log("render frame");
+        // const startTime = performance.now();
+
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+
+        // const startEnd = performance.now();
+        // const renderTime = startEnd - startTime;
+        // console.log(`render frame fps = ${1000 / renderTime} ms`);
+        // return renderTime;
     }
 }
 
-let config = new AlgoViewСonfiguration();
-console.log(config);
+const config = new AlgoViewСonfiguration();
 
 /** Модель одной вершины. */
 class Vertex {
@@ -521,8 +560,8 @@ class DataLoader {
 class Model {
     constructor() {
         const dataLoader = new DataLoader();
-        const graphData = dataLoader.loadGraphData();
-        this.graph = new Graph(graphData);
+        this.graphData = dataLoader.loadGraphData();
+        this.graph = new Graph(this.graphData);
     }
 }
 
@@ -541,6 +580,11 @@ class View {
         this.modelContext = modelContext;
 
         this.updateSceneSize();
+        this.setupSceneView();
+        this.setupGraphView();
+    }
+
+    rebuildSceneObjects() {
         this.setupSceneView();
         this.setupGraphView();
     }
@@ -635,110 +679,150 @@ class View {
     }
 }
 
-/** Слой контроллера в MVC. (пока пустой)*/
+/** Слой контроллера в MVC. */
 class Controller {
-    constructor() {}
+    constructor(appManagerContext, viewContext) {
+        this.appManagerContext = appManagerContext;
+        this.viewContext = viewContext;
+
+        // console.log("this.appManagerContext = ", this.appManagerContext);
+    }
+
+    rebuildScene() {
+        if (!this.appManagerContext.isBuildDone()) return;
+
+        config.clearScene();
+        this.viewContext.rebuildSceneObjects();
+        console.log("done rebuild");
+    }
+
+    setNewCamera() {
+        if (!this.appManagerContext.isBuildDone()) return;
+
+        config.updateCamera();
+        console.log("done update camera");
+    }
+
+    autoRotateGraph() {
+        config.rotateGraphByClock();
+    }
 }
 
-// function createArrowsTest() {
-//     GraphicObjects.createLight();
-//     GraphicObjects.createAxisText();
-//     const n = 20;
-//     const l = 30;
+class AppManager {
+    constructor() {
+        this.targetObj = {};
+        this.buildStatus = "in build process";
+        this.statusProxy = new Proxy(this.targetObj, {
+            set: function (target, key, value) {
+                console.log(`${key} set to ${value}`);
+                target[key] = value;
 
-//     xMaxPos = l;
-//     yMaxPos = l;
-//     zMaxPos = l;
+                if (value == "done") {
+                    config.setupGUI();
+                }
 
-//     const v0 = new THREE.Vector3(0, 0, 0);
+                return true;
+            },
+        });
+    }
 
-//     // arrows
-//     for (let i = 0; i < n; i++) {
-//         const a = ((Math.PI * 2) / n) * i;
-//         const x = l * Math.sin(a);
-//         const y = l * Math.cos(a);
+    setDoneBuildStatus() {
+        this.buildStatus = "done";
+        this.statusProxy.newBuildStatus = "done";
+    }
 
-//         GraphicObjects.createArrow(v0, new THREE.Vector3(x, y, 40));
+    isBuildDone() {
+        return this.buildStatus == "done";
+    }
+}
+
+class App {
+    constructor() {
+        this.appManager = new AppManager();
+        this.model = new Model();
+        this.view = new View(this.model);
+        this.controller = new Controller(this.appManager, this.view);
+
+        config.setControllerContext(this.controller);
+        // this.appManager.setDoneBuildStatus();
+        this.appManager.buildStatus = "done";
+        config.setupGUI();
+    }
+}
+
+// function renderLoopOld() {
+//     requestAnimationFrame(renderLoopOld);
+//     config.renderFrame();
+// }
+
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const fps = 60;
+const maxFrameTime = 1000 / fps;
+
+async function renderLoop() {
+    const startTime = performance.now();
+
+    if (config.params.autoRotate) {
+        app.controller.autoRotateGraph();
+    }
+
+    config.renderFrame();
+
+    const endTime = performance.now();
+    const renderTime = endTime - startTime;
+
+    if (renderTime < maxFrameTime - 1) {
+        await sleep(maxFrameTime - renderTime);
+    }
+
+    // const endFrameTime = performance.now();
+    // console.log("fps =", 1000 / (endFrameTime - startTime));
+    requestAnimationFrame(renderLoop);
+}
+
+const app = new App();
+renderLoop();
+
+// class A{
+//     constructor(){
+//         this.x = 5
 //     }
 
-//     // lines
-//     {
-//         let line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(0, 0, 0));
-//         line.vertices.push(new THREE.Vector3(l, 0, 0));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(0, 0, 0));
-//         line.vertices.push(new THREE.Vector3(0, l, 0));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(0, 0, 0));
-//         line.vertices.push(new THREE.Vector3(0, 0, l));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         //
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(l, 0, 0));
-//         line.vertices.push(new THREE.Vector3(l, l, 0));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(l, 0, 0));
-//         line.vertices.push(new THREE.Vector3(l, 0, l));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         //
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(0, l, 0));
-//         line.vertices.push(new THREE.Vector3(l, l, 0));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(0, l, 0));
-//         line.vertices.push(new THREE.Vector3(0, l, l));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         //
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(0, 0, l));
-//         line.vertices.push(new THREE.Vector3(0, l, l));
-//         GraphicObjects.makeLineByGeo(line, 6);
-
-//         line = new THREE.Geometry();
-//         line.vertices.push(new THREE.Vector3(0, 0, l));
-//         line.vertices.push(new THREE.Vector3(l, 0, l));
-//         GraphicObjects.makeLineByGeo(line, 6);
+//     setX(newValue){
+//         this.x = newValue
 //     }
 // }
 
-function initMVC() {
-    const model = new Model();
-    const view = new View(model);
-    const controller = new Controller();
-}
+// class B{
+//     constructor(cl){
+//         this.cl = cl
+//     }
 
-function render() {
-    requestAnimationFrame(render);
-    config.renderFrame();
+//     tryMethod(value){
+//         this.cl.setX(value)
+//     }
+// }
 
-    // config.controls.update();
-    // if (config.params.autoRotate) {
-    //     config.graph.rotation.y += 0.25 * config.clock.getDelta();
-    // }
-    // config.renderer.render(config.scene, config.camera);
-}
+// a = new A()
+// b = new B(a)
 
-function main() {
-    console.log("in main 1");
-    initMVC();
-    console.log("in main 2");
-    render();
-    console.log("in main 3");
-}
+// console.log("first:")
+// console.log(a)
+// console.log(b)
 
-main();
+// a.setX(8)
+
+// console.log("second:")
+// console.log(a)
+// console.log(b)
+
+// b.tryMethod(10)
+
+// console.log("3:")
+// console.log(a)
+// console.log(b)
+
+// https://www.programiz.com/javascript/online-compiler/
