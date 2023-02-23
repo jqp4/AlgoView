@@ -15,6 +15,9 @@ class Params {
     constructor() {
         this.pause = false;
         this.autoRotate = false;
+        this.showSystemLoadInformation = true;
+
+        this.fpsRate = 60;
         this.lineWidth = 5;
         this.cameraType = CameraTypes.perspective;
     }
@@ -42,12 +45,11 @@ class AlgoViewСonfiguration {
 
     setControllerContext(controllerContext) {
         this.controllerContext = controllerContext;
-        console.log("new controllerContext - ", this.controllerContext);
+        // console.log("new controllerContext - ", this.controllerContext);
     }
 
     configuringThreeJS() {
         this.container = document.getElementById("container");
-
         this.scene = new THREE.Scene();
 
         this.camera = this.createCamera();
@@ -82,29 +84,63 @@ class AlgoViewСonfiguration {
     }
 
     createCamera() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const near = 1; // усечение минимальной видимости камеры (дальность)
+        const far = 500; // усечение максимальной видимости камеры (дальность)
+
         if (this.params.cameraType == CameraTypes.perspective) {
-            return new THREE.PerspectiveCamera(
-                60,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                400
-            );
+            const fov = 60; // угол обзора
+
+            return new THREE.PerspectiveCamera(fov, w / h, near, far);
         } else {
-            return new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
+            const orthographicScale = 10; // масштаб
+
+            return new THREE.OrthographicCamera(
+                w / -orthographicScale,
+                w / orthographicScale,
+                h / orthographicScale,
+                h / -orthographicScale,
+                near,
+                far
+            );
         }
     }
 
-    // updateCamera() {
-    //     // this.camera.remove();
-    //     this.camera = this.createCamera();
+    setOXView() {
+        // https://threejs.org/docs/#api/en/cameras/PerspectiveCamera
+        // const w = 1920;
+        // const h = 1080;
+        // const fullWidth = w * 3;
+        // const fullHeight = h * 2;
+        // // A
+        // camera.setViewOffset(fullWidth, fullHeight, w * 0, h * 0, w, h);
+        // // B
+        // camera.setViewOffset(fullWidth, fullHeight, w * 1, h * 0, w, h);
+        // // C
+        // camera.setViewOffset(fullWidth, fullHeight, w * 2, h * 0, w, h);
+        // // D
+        // camera.setViewOffset(fullWidth, fullHeight, w * 0, h * 1, w, h);
+        // // E
+        // camera.setViewOffset(fullWidth, fullHeight, w * 1, h * 1, w, h);
+        // // F
+        // camera.setViewOffset(fullWidth, fullHeight, w * 2, h * 1, w, h);
+    }
 
-    //     this.controls = new THREE.OrbitControls(
-    //         this.camera,
-    //         this.renderer.domElement
-    //     );
+    updateCamera() {
+        const cameraPosition = this.camera.position;
+        this.camera = this.createCamera();
+        this.camera.position.set(
+            cameraPosition.x,
+            cameraPosition.y,
+            cameraPosition.z
+        );
 
-    //     this.controls.update();
-    // }
+        this.controls = new THREE.OrbitControls(
+            this.camera,
+            this.renderer.domElement
+        );
+    }
 
     updateGraphRotationY() {
         this.graph.rotation.y = this.graphRotationY;
@@ -117,7 +153,15 @@ class AlgoViewСonfiguration {
 
     /** Настройка GUI */
     setupGUI() {
+        // https://stackoverflow.com/questions/38762124/how-to-add-folders-in-dat-gui
+
         this.gui = new dat.GUI();
+        const folderViewSettins = this.gui.addFolder("View Settins");
+        const folderSceneControls = this.gui.addFolder("Scene Controls");
+
+        folderViewSettins.open();
+        folderSceneControls.open();
+
         const controllerContextTrans = this.controllerContext;
         const rebuildSceneCallback = function () {
             controllerContextTrans.rebuildScene();
@@ -127,29 +171,40 @@ class AlgoViewСonfiguration {
             controllerContextTrans.setNewCamera();
         };
 
-        this.gui
-            .add(this.params, "lineWidth", 1, 15)
+        folderViewSettins.add(this.params, "fpsRate", 20, 100).name("FPS rate");
+
+        folderViewSettins
+            .add(this.params, "lineWidth", 1, 10)
             .name("Line width")
             .onChange(rebuildSceneCallback);
 
-        // this.gui
-        //     .add(this.params, "cameraType", [
-        //         CameraTypes.perspective,
-        //         CameraTypes.orthographic,
-        //     ])
-        //     .name("Camera type")
-        //     .onChange(resetCameraCallback);
+        folderViewSettins
+            .add(this.params, "cameraType", [
+                CameraTypes.perspective,
+                CameraTypes.orthographic,
+            ])
+            .name("Camera type")
+            .onChange(resetCameraCallback);
 
-        this.gui
+        folderViewSettins
+            .add(this.params, "showSystemLoadInformation")
+            .name("Show load info")
+            .onChange(function () {
+                changeInfoBlock("", "");
+            });
+
+        folderSceneControls
             .add(this.params, "autoRotate")
-            .name("auto rotate")
+            .name("Auto rotate")
             .onChange(function () {
                 config.clock.getDelta();
             });
 
-        this.gui
+        folderSceneControls.add(this.params, "pause").name("Stop rendering");
+
+        folderSceneControls
             .add(this.controllerContext, "rebuildScene")
-            .name("rebuild scene"); // .onChange(rebuildSceneCallback);
+            .name("Rebuild"); // .onChange(rebuildSceneCallback);
     }
 
     /** Обработка изменения размера экрана */
@@ -172,7 +227,7 @@ class AlgoViewСonfiguration {
 
     setupEventListeners() {
         // window.addEventListener("load", this.setupGUI());
-        window.addEventListener("resize", this.onWindowResize());
+        // window.addEventListener("resize", this.onWindowResize());
     }
 
     clearScene() {
@@ -750,40 +805,118 @@ class App {
     }
 }
 
-// function renderLoopOld() {
-//     requestAnimationFrame(renderLoopOld);
-//     config.renderFrame();
-// }
+function changeInfoBlock(text1, text2) {
+    const content1 = "<h4>" + text1 + "</h4>";
+    const content2 = "<h4>" + text2 + "</h4>";
+
+    document.getElementById("textInfoBlock_1").innerHTML = content1;
+    document.getElementById("textInfoBlock_2").innerHTML = content2;
+}
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const fps = 60;
-const maxFrameTime = 1000 / fps;
+class FPSManager {
+    /** number of values in a line */
+    #n;
+
+    /** FPS values line (array) */
+    #fpsLine;
+
+    /** render time values line (array) */
+    #rtLine;
+
+    constructor() {
+        this.#n = Math.round(config.params.fpsRate / 3) + 1;
+        this.#fpsLine = [0];
+        this.#rtLine = [0];
+    }
+
+    addFpsValue(newValue) {
+        while (this.#fpsLine.length >= this.#n) {
+            this.#fpsLine.shift(); // удаление первого элемента
+        }
+
+        this.#fpsLine.push(newValue);
+    }
+
+    addRenderTimeValue(newValue) {
+        while (this.#rtLine.length >= this.#n) {
+            this.#rtLine.shift(); // удаление первого элемента
+        }
+
+        this.#rtLine.push(newValue);
+    }
+
+    getAverageFps() {
+        const sum = this.#fpsLine.reduce((partialSum, a) => partialSum + a, 0);
+        return sum / this.#fpsLine.length;
+    }
+
+    getAverageRenderTime() {
+        const sum = this.#rtLine.reduce((partialSum, a) => partialSum + a, 0);
+        return sum / this.#rtLine.length;
+    }
+
+    getFpsInfoStr() {
+        const AverageFpsStr = this.getAverageFps().toFixed(1);
+        const infoStr = "FPS: " + AverageFpsStr;
+        return infoStr;
+    }
+
+    getRenderTimeInfoStr() {
+        const AverageRenderTimeStr = this.getAverageRenderTime().toFixed(2);
+        const maxFrameTime = (1000 / config.params.fpsRate).toFixed(2);
+
+        const infoStr =
+            "Render time: " +
+            AverageRenderTimeStr +
+            " / " +
+            maxFrameTime +
+            " ms";
+
+        return infoStr;
+    }
+}
+
+const fpsManager = new FPSManager();
 
 async function renderLoop() {
     const startTime = performance.now();
 
-    if (config.params.autoRotate) {
-        app.controller.autoRotateGraph();
-    }
+    if (!config.params.pause) {
+        if (config.params.autoRotate) {
+            app.controller.autoRotateGraph();
+        }
 
-    config.renderFrame();
+        config.renderFrame();
+    }
 
     const endTime = performance.now();
     const renderTime = endTime - startTime;
+    const maxFrameTime = 1000 / config.params.fpsRate;
 
     if (renderTime < maxFrameTime - 1) {
         await sleep(maxFrameTime - renderTime);
     }
 
-    // const endFrameTime = performance.now();
-    // console.log("fps =", 1000 / (endFrameTime - startTime));
+    const endFrameTime = performance.now();
+    const fps = 1000 / (endFrameTime - startTime);
+
+    fpsManager.addFpsValue(fps);
+    fpsManager.addRenderTimeValue(renderTime);
+    if (config.params.showSystemLoadInformation) {
+        changeInfoBlock(
+            fpsManager.getFpsInfoStr(),
+            fpsManager.getRenderTimeInfoStr()
+        );
+    }
     requestAnimationFrame(renderLoop);
 }
 
 const app = new App();
+
 renderLoop();
 
 // class A{
