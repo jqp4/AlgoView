@@ -17,8 +17,8 @@ class Params {
         this.autoRotate = false;
         this.showSystemLoadInformation = true;
 
-        this.fpsRate = 60;
-        this.lineWidth = 5;
+        this.fpsRate = 40;
+        this.lineWidth = 4;
         this.cameraType = CameraTypes.perspective;
     }
 }
@@ -27,22 +27,14 @@ class AlgoViewСonfiguration {
     constructor() {
         this.params = new Params();
         this.configuringThreeJS();
-        // this.setGraphRebuildCallback(function () {}); // устанавливаем пустую функцию
-        this.setControllerContext(123);
-
         this.setupEventListeners();
     }
 
     /**
-     * Функция установски коллбека для обновления графа. Требуется
-     * так как иначе не получится связать GUI с тонкой перестройкой графа.
-     * @param {function} func - новая функция коллбека.
+     * Функция установки контекста контроллера для использования коллбеков обновления графа и вида.
+     * Требуется так как иначе не получится связать GUI с тонкой перестройкой графа и вида.
+     * @param {Controller} controllerContext - новая функция коллбека.
      */
-    // setGraphRebuildCallback(func) {
-    //     this.graphRebuildCallback = func;
-    //     console.log("new graphRebuildCallback - ", this.graphRebuildCallback);
-    // }
-
     setControllerContext(controllerContext) {
         this.controllerContext = controllerContext;
         // console.log("new controllerContext - ", this.controllerContext);
@@ -94,7 +86,7 @@ class AlgoViewСonfiguration {
 
             return new THREE.PerspectiveCamera(fov, w / h, near, far);
         } else {
-            const orthographicScale = 10; // масштаб
+            const orthographicScale = 15; // масштаб
 
             return new THREE.OrthographicCamera(
                 w / -orthographicScale,
@@ -107,7 +99,7 @@ class AlgoViewСonfiguration {
         }
     }
 
-    setOXView() {
+    setYZView_old() {
         // https://threejs.org/docs/#api/en/cameras/PerspectiveCamera
         // const w = 1920;
         // const h = 1080;
@@ -125,6 +117,21 @@ class AlgoViewСonfiguration {
         // camera.setViewOffset(fullWidth, fullHeight, w * 1, h * 1, w, h);
         // // F
         // camera.setViewOffset(fullWidth, fullHeight, w * 2, h * 1, w, h);
+    }
+
+    setXYView() {
+        this.camera.position.set(0, 0, 100);
+        this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+
+    setXZView() {
+        this.camera.position.set(0, 100, 0);
+        this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+
+    setYZView() {
+        this.camera.position.set(100, 0, 0);
+        this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     }
 
     updateCamera() {
@@ -157,12 +164,16 @@ class AlgoViewСonfiguration {
 
         this.gui = new dat.GUI();
         const folderViewSettins = this.gui.addFolder("View Settins");
+        const folderCameraControls = this.gui.addFolder("Camera Controls");
         const folderSceneControls = this.gui.addFolder("Scene Controls");
 
-        folderViewSettins.open();
+        // folderViewSettins.open();
+        folderCameraControls.open();
         folderSceneControls.open();
 
+        const thisContextTrans = this;
         const controllerContextTrans = this.controllerContext;
+
         const rebuildSceneCallback = function () {
             controllerContextTrans.rebuildScene();
         };
@@ -170,6 +181,15 @@ class AlgoViewСonfiguration {
         const resetCameraCallback = function () {
             controllerContextTrans.setNewCamera();
         };
+
+        // const setXYView = function () {
+        //     thisContextTrans.setXYView();
+        // };
+
+        /**     ================
+         *        View Settins
+         *      ================
+         */
 
         folderViewSettins.add(this.params, "fpsRate", 20, 100).name("FPS rate");
 
@@ -179,6 +199,18 @@ class AlgoViewСonfiguration {
             .onChange(rebuildSceneCallback);
 
         folderViewSettins
+            .add(this.params, "showSystemLoadInformation")
+            .name("Show load info")
+            .onChange(function () {
+                changeInfoBlock("", "");
+            });
+
+        /**     ===================
+         *        Camera Controls
+         *      ===================
+         */
+
+        folderCameraControls
             .add(this.params, "cameraType", [
                 CameraTypes.perspective,
                 CameraTypes.orthographic,
@@ -186,12 +218,14 @@ class AlgoViewСonfiguration {
             .name("Camera type")
             .onChange(resetCameraCallback);
 
-        folderViewSettins
-            .add(this.params, "showSystemLoadInformation")
-            .name("Show load info")
-            .onChange(function () {
-                changeInfoBlock("", "");
-            });
+        folderCameraControls.add(this, "setXYView").name("Set XY view");
+        folderCameraControls.add(this, "setXZView").name("Set XZ view");
+        folderCameraControls.add(this, "setYZView").name("Set YZ view");
+
+        /**     ==================
+         *        Scene Controls
+         *      ==================
+         */
 
         folderSceneControls
             .add(this.params, "autoRotate")
@@ -239,16 +273,8 @@ class AlgoViewСonfiguration {
     }
 
     renderFrame() {
-        // console.log("render frame");
-        // const startTime = performance.now();
-
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
-
-        // const startEnd = performance.now();
-        // const renderTime = startEnd - startTime;
-        // console.log(`render frame fps = ${1000 / renderTime} ms`);
-        // return renderTime;
     }
 }
 
@@ -293,6 +319,12 @@ class Graph {
     vertices = new Map();
     edges = new Map();
 
+    /** Сдвиг от осей */
+    #axisShift = 8;
+
+    /** Масштаб */
+    #scale = 10;
+
     constructor(graphData) {
         this.graphData = graphData;
 
@@ -302,19 +334,27 @@ class Graph {
         this.size = this.getSize();
     }
 
+    /**
+     * Преобразование координат
+     * @param {number} value
+     * @returns преобразованное значение
+     */
+    coordinateTransform(value) {
+        return this.#axisShift + value * this.#scale;
+    }
+
     createVertices() {
         for (let i = 0; i < this.graphData.vertices.length; i++) {
             const element = this.graphData.vertices[i];
 
             const vertex = new Vertex(
                 element.id,
-                element.coordinates[0],
-                element.coordinates[1],
-                element.coordinates[2],
+                this.coordinateTransform(element.coordinates[0]),
+                this.coordinateTransform(element.coordinates[1]),
+                this.coordinateTransform(element.coordinates[2]),
                 element.type
             );
 
-            // console.log(vertex);
             this.vertices.set(element.id, vertex);
         }
     }
@@ -330,7 +370,6 @@ class Graph {
                 element.type
             );
 
-            // console.log(edge);
             this.edges.set(element.id, edge);
         }
     }
@@ -350,7 +389,7 @@ class Graph {
 
 /** Набор инструментов создания графических объектов. */
 class GraphicObjects {
-    static createMeshLineByGeo(geo, colorIndex) {
+    static #createMeshLineByGeo(geo, colorIndex) {
         const meshLine = new MeshLine();
         meshLine.setGeometry(geo);
 
@@ -367,7 +406,7 @@ class GraphicObjects {
         config.graph.add(mesh);
     }
 
-    static createMeshLine(sourceVector3, targetVector3, colorIndex) {
+    static #createMeshLine(sourceVector3, targetVector3, colorIndex) {
         const line = new THREE.Geometry();
         line.vertices.push(sourceVector3);
         line.vertices.push(targetVector3);
@@ -389,7 +428,7 @@ class GraphicObjects {
     }
 
     /** супер простая линия если понадобится */
-    static createSimpleLine(sourceVector3, targetVector3, colorIndex) {
+    static #createSimpleLine(sourceVector3, targetVector3, colorIndex) {
         const geometry = new THREE.Geometry();
         geometry.vertices.push(sourceVector3);
         geometry.vertices.push(targetVector3);
@@ -407,13 +446,13 @@ class GraphicObjects {
      * @param {number} colorIndex индекс в цветовом массиве
      */
     static createLine(sourceVector3, targetVector3, colorIndex) {
-        this.createMeshLine(sourceVector3, targetVector3, colorIndex);
+        this.#createMeshLine(sourceVector3, targetVector3, colorIndex);
         // this.createSimpleLine(sourceVector3, targetVector3, colorIndex);
     }
 
     /** Создает сферу по заданным координатам */
-    static createSphere(x, y, z, colorIndex) {
-        const sphereRadius = 2;
+    static createSphere(x, y, z, colorIndex = 1, sphereRadius = 2) {
+        // const sphereRadius = 2;
         const sphereWidthDivisions = 16;
         const sphereHeightDivisions = 16;
         const sphereGeo = new THREE.SphereGeometry(
@@ -431,10 +470,26 @@ class GraphicObjects {
         config.graph.add(mesh);
     }
 
+    /** Создает куб по заданным координатам */
+    static createCube(x, y, z, colorIndex = 1) {
+        const cubeSize = 2;
+        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+        // const cubeMat = new THREE.MeshPhongMaterial({ color: "#8AC" });
+        const cubeMat = new THREE.MeshPhongMaterial({
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(cubeGeo, cubeMat);
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает октаэдр по заданным координатам */
     static createOctahedron(x, y, z, colorIndex) {
         // https://threejs.org/docs/#api/en/geometries/OctahedronGeometry
 
-        const octahedronRadius = 2;
+        const octahedronRadius = 1.8;
         const octahedronGeo = new THREE.OctahedronGeometry(octahedronRadius);
         const octahedronMat = new THREE.MeshPhongMaterial({
             color: colors[colorIndex],
@@ -445,30 +500,34 @@ class GraphicObjects {
         config.graph.add(mesh);
     }
 
+    /** Создает стрелку по двум векторам */
     static createArrow(sourceVector3, targetVector3, colorIndex = 3) {
-        const x = targetVector3.x - sourceVector3.x;
-        const y = targetVector3.y - sourceVector3.y;
-        const z = targetVector3.z - sourceVector3.z;
+        const arrowVector3 = new THREE.Vector3(
+            targetVector3.x - sourceVector3.x,
+            targetVector3.y - sourceVector3.y,
+            targetVector3.z - sourceVector3.z
+        );
 
-        const shiftLength = 2.9;
-        const vectorLength = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
-        const shift = new THREE.Vector3(
-            (x * shiftLength) / vectorLength,
-            (y * shiftLength) / vectorLength,
-            (z * shiftLength) / vectorLength
+        /** Половина высоты конуса у стрелки + радиус большого шара */
+        const shiftLength = 1.8 / 2 + 1.8;
+        const arrowNormalizeVector3 = arrowVector3.normalize();
+        const shiftVector3 = new THREE.Vector3(
+            arrowNormalizeVector3.x * shiftLength,
+            arrowNormalizeVector3.y * shiftLength,
+            arrowNormalizeVector3.z * shiftLength
         );
 
         const croppedTargetVector3 = new THREE.Vector3(
-            targetVector3.x - shift.x,
-            targetVector3.y - shift.y,
-            targetVector3.z - shift.z
+            targetVector3.x - shiftVector3.x,
+            targetVector3.y - shiftVector3.y,
+            targetVector3.z - shiftVector3.z
         );
 
         // линия
         this.createLine(sourceVector3, croppedTargetVector3, colorIndex);
 
         // конус
-        const coneMesh = this.getConeMesh(colorIndex);
+        const coneMesh = this.#getConeMesh(colorIndex);
         coneMesh.rotation.x = Math.PI / 2;
 
         const cone = new THREE.Object3D();
@@ -483,13 +542,13 @@ class GraphicObjects {
         config.graph.add(cone);
     }
 
-    static getConeMesh(colorIndex = 3) {
+    static #getConeMesh(colorIndex = 3) {
         // конус
         // https://customizer.github.io/three.js-doc.ru/geometries/coneBufferGeometry.htm
         // https://threejs.org/docs/#api/en/geometries/ConeGeometry
 
-        const coneRadius = 0.8; // 1.5;
-        const coneHeight = 2; // 4;
+        const coneRadius = 0.6;
+        const coneHeight = 1.8;
         const coneRadiusSegments = 16;
 
         const coneGeometry = new THREE.ConeGeometry(
@@ -529,10 +588,10 @@ class GraphicObjects {
             new THREE.Vector3(0, 0, ozAxisLength)
         );
 
-        this.createAxisText(oxAxisLength, oyAxisLength, ozAxisLength);
+        this.#createAxisText(oxAxisLength, oyAxisLength, ozAxisLength);
     }
 
-    static getTextParameters(text, fontSize) {
+    static #getTextParameters(text, fontSize) {
         return {
             alignment: "center",
             backgroundColor: "rgba(0,0,0,0)",
@@ -556,12 +615,12 @@ class GraphicObjects {
      * @param {number} oyAxisLength
      * @param {number} oxAxisLength
      */
-    static createAxisText(oxAxisLength, oyAxisLength, ozAxisLength) {
+    static #createAxisText(oxAxisLength, oyAxisLength, ozAxisLength) {
         const fontSize = 5;
 
-        const parameters_x = this.getTextParameters("x", fontSize);
-        const parameters_y = this.getTextParameters("y", fontSize);
-        const parameters_z = this.getTextParameters("z", fontSize);
+        const parameters_x = this.#getTextParameters("x", fontSize);
+        const parameters_y = this.#getTextParameters("y", fontSize);
+        const parameters_z = this.#getTextParameters("z", fontSize);
 
         const label_x = new THREE.TextSprite(parameters_x);
         const label_y = new THREE.TextSprite(parameters_y);
@@ -576,19 +635,28 @@ class GraphicObjects {
         config.graph.add(label_z);
     }
 
+    /** Создание освещения на сцене */
     static createLight() {
         const color = 0xffffff;
-        const intensity = 1;
+        const intensity = 0.65;
         const light = new THREE.DirectionalLight(color, intensity);
-        light.position.set(0, 10, 2);
-        light.target.position.set(-5, 0, 0);
+        // light.position.set(0, 0, 0);
+        light.target.position.set(-5, -10, -2);
         config.graph.add(light);
         config.graph.add(light.target);
 
+        // GraphicObjects.createArrow(
+        //     new THREE.Vector3(0, 0, 0),
+        //     new THREE.Vector3(-5, -10, -2),
+        //     7
+        // );
+
         // https://www.youtube.com/watch?v=T6PhV4Hz0u4
-        const ambientIntensity = 0.2;
+        const ambientIntensity = 1 - intensity;
         const ambientLight = new THREE.AmbientLight(color, ambientIntensity);
         config.graph.add(ambientLight);
+
+        return light;
     }
 }
 
@@ -660,7 +728,16 @@ class View {
 
     /** Наполнение сцены светом, осями координат */
     setupSceneView() {
-        GraphicObjects.createLight();
+        const lightContext = GraphicObjects.createLight();
+
+        // config.controls.addEventListener("change", function () {
+        //     const x = config.camera.position.x;
+        //     const y = config.camera.position.y;
+        //     const z = config.camera.position.z;
+        //     // const len =  config.camera.position.length ;
+        //     lightContext.target.position.set(-x * 1.0, -y * 1.0, -z * 1.0);
+        // });
+
         GraphicObjects.createAxis(
             this.oxAxisLength,
             this.oyAxisLength,
@@ -690,17 +767,13 @@ class View {
      * @param {Vertex} vetrex - вершина, экземпляр класса `Vertex`.
      */
     buildVertexObject(vetrex) {
+        // 0 - входная/выходная вершина, октаэдр
+        // 1 - маленький шар
+        // 2 - большой шар
+        // 3 - хз пока что
+
         switch (vetrex.type) {
             case "0": {
-                GraphicObjects.createSphere(
-                    vetrex.pos.x,
-                    vetrex.pos.y,
-                    vetrex.pos.z,
-                    1
-                );
-                break;
-            }
-            case "1": {
                 GraphicObjects.createOctahedron(
                     vetrex.pos.x,
                     vetrex.pos.y,
@@ -709,8 +782,29 @@ class View {
                 );
                 break;
             }
-            default: {
+            case "1": {
                 GraphicObjects.createSphere(
+                    vetrex.pos.x,
+                    vetrex.pos.y,
+                    vetrex.pos.z,
+                    1,
+                    1.3
+                );
+                break;
+            }
+
+            case "2": {
+                GraphicObjects.createSphere(
+                    vetrex.pos.x,
+                    vetrex.pos.y,
+                    vetrex.pos.z,
+                    1,
+                    1.8
+                );
+                break;
+            }
+            default: {
+                GraphicObjects.createCube(
                     vetrex.pos.x,
                     vetrex.pos.y,
                     vetrex.pos.z,
@@ -882,7 +976,25 @@ class FPSManager {
 
 const fpsManager = new FPSManager();
 
+// function resizeRendererToDisplaySize(renderer) {
+//     const canvas = renderer.domElement;
+//     const pixelRatio = window.devicePixelRatio;
+//     const width = (canvas.clientWidth * pixelRatio) | 0;
+//     const height = (canvas.clientHeight * pixelRatio) | 0;
+//     const needResize = canvas.width !== width || canvas.height !== height;
+//     if (needResize) {
+//         renderer.setSize(width, height, false);
+//     }
+//     return needResize;
+// }
+
 async function renderLoop() {
+    // if (resizeRendererToDisplaySize(renderer)) {
+    //     const canvas = renderer.domElement;
+    //     camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    //     camera.updateProjectionMatrix();
+    // }
+
     const startTime = performance.now();
 
     if (!config.params.pause) {
@@ -898,7 +1010,9 @@ async function renderLoop() {
     const maxFrameTime = 1000 / config.params.fpsRate;
 
     if (renderTime < maxFrameTime - 1) {
-        await sleep(maxFrameTime - renderTime);
+        const error = 0.035; // погрешность при вычислении
+        const sleepTime = maxFrameTime - renderTime;
+        await sleep(sleepTime * (1 - error));
     }
 
     const endFrameTime = performance.now();

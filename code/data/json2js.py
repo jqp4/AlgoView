@@ -10,7 +10,8 @@ except:
 
 
 root = './'
-f = open(root + 'trial_json_full.json', 'r')
+filename = "data"
+f = open(root + filename + '.json', 'r')
 data = str(json.load(f)).replace("\'", "\"")
 # print(data)
 f.close()
