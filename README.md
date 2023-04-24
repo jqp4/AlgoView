@@ -1,11 +1,31 @@
 # AlgoView (2.0)
 
-## Материалы
+## Node JS Server
 
-* Исходная работа Никиты - <https://github.com/VolkovNikita94/Flask_ss>
+### 1. Install dependencies
 
-## Примеры работы системы прошлой версии
+```bash
+npm install
+```
 
-* example.xml - <https://algoload.parallel.ru/receive_task?username=ucmc2022ss020&graph_name=example.xml>
-* Обсуждение алгоритмов - <https://algowiki-project.org/ru/%D0%9E%D0%B1%D1%81%D1%83%D0%B6%D0%B4%D0%B5%D0%BD%D0%B8%D0%B5_%D1%83%D1%87%D0%B0%D1%81%D1%82%D0%BD%D0%B8%D0%BA%D0%B0:VolkovNikita94>
+### 2. Create folder uploadFiles
 
+```bash
+mkdir uploadFiles
+```
+
+### 3. Run web server in dev mode
+
+```bash
+npm run dev
+```
+
+### 4. Go to <http://localhost:3001>
+
+---
+
+### Info
+
+* Upload file with Koa: <https://betterprogramming.pub/a-complete-guide-of-file-uploading-in-javascript-2c29c61336f5>
+* Run python script: <https://medium.com/swlh/run-python-script-from-node-js-and-send-data-to-browser-15677fcf199f>
+* Alternatives To Heroku For hosting a NodeJS app: <https://youtu.be/q8GSWGu2roA>

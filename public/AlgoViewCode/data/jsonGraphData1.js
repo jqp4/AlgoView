@@ -1,0 +1,1 @@
+jsonGraphData = '{"vertices": [{"id": 0, "coordinates": [0, 0, 0], "type": "0"}, {"id": 1, "coordinates": [1, 0, 0], "type": "2"}, {"id": 2, "coordinates": [2, 0, 0], "type": "2"}], "edges": [{"id": 0, "sourceVertexId": 0, "targetVertexId": 1, "type": "0"}, {"id": 1, "sourceVertexId": 1, "targetVertexId": 2, "type": "0"}]}'
