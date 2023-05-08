@@ -22,6 +22,3 @@ remove:
 
 push-to-hub:
 	docker push $(IMAGE_NAME)
-
-
-	
