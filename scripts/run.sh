@@ -1,5 +1,7 @@
-# echo "2 from sh script:"
-# echo $1
+#!/bin/bash
+
+echo "2 from sh script:"
+echo $1
 
 cd ./scripts
 

@@ -1,0 +1,27 @@
+CONTAINER_PORT=3001
+LOCAL_PORT=3001
+
+IMAGE_NAME = jqp4x/algoview:v1.0
+
+pull-from-hub:
+        docker pull $(IMAGE_NAME)
+
+# запуск контейнера в асинхронном режиме
+run:
+        docker run -d -p $(LOCAL_PORT):$(CONTAINER_PORT) -v uploadFiles:/app/uploadFiles --rm --name algoview $(IMAGE_NAME)
+        echo "Port: " $(LOCAL_PORT)
+
+# connect to docker container bash
+connect-to-container:
+        docker exec -it algoview /bin/bash
+
+# запуск контейнера в интерактивном режиме (будет выполняться в текущей сессии) 
+run-it:
+        docker run -p $(LOCAL_PORT):$(CONTAINER_PORT) -v uploadFiles:/app/uploadFiles --rm --name algoview $(IMAGE_NAME)
+        echo "Port: " $(LOCAL_PORT)
+
+stop:
+        docker stop algoview
+
+remove:
+        docker image rm $(IMAGE_NAME)

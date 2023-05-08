@@ -92,7 +92,7 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
     const collectData = function (data) {
         // console.log("Pipe data from python script ...");
         // dataToSend = data.toString();
-        // console.log(data.toString());
+        console.log(data.toString());
     };
 
     shScript.stdout.on("data", collectData);
@@ -108,7 +108,8 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
 
     ctx.body = {
         uploadStatus: `file ${ctx.request.file.filename} has been saved on the server`,
-        url: `http://localhost:${PORT}/${ctx.request.file.originalname}`,
+        // url: `http://localhost:${PORT}/${ctx.request.file.originalname}`,
+        url: `/${ctx.request.file.originalname}`,
     };
 });
 
