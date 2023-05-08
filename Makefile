@@ -1,7 +1,7 @@
 CONTAINER_PORT=3001
 LOCAL_PORT=3001
 
-IMAGE_NAME = jqp4x/algoview:v1.0
+IMAGE_NAME = jqp4x/algoview:v1.1
 
 build:
 	docker build -t $(IMAGE_NAME) .

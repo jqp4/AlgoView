@@ -5,6 +5,7 @@ COPY . .
 
 RUN npm install
 RUN mkdir -p uploadFiles
+RUN mkdir -p public/AlgoViewCode/data
 
 RUN (cd ./architect && make && mv main ../scripts)
 
