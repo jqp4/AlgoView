@@ -24,6 +24,7 @@ draw_info_box "run main $1"
 # output.json --> jsonGraphData.js
 echo "\n"
 draw_info_box "run python3 json2js.py output.json ../public/AlgoViewCode/data/jsonGraphData.js"
+mkdir -p ../public/AlgoViewCode/data
 python3 json2js.py output.json ../public/AlgoViewCode/data/jsonGraphData.js
 
 draw_info_box "done!"

@@ -76,7 +76,7 @@ const upload = multer({ storage: storage });
 // add a route for uploading single files
 router.post("/upload-single-file", upload.single("file"), (ctx) => {
     // Run script
-    let dataToSend = "";
+    // let dataToSend = "";
 
     // spawn new child process to call the python script
     const shScript = spawn("sh", [
@@ -90,20 +90,25 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
 
     // collect data from script
     const collectData = function (data) {
-        dataToSend += data.toString();
-        // process.stdout.write(data.toString());
+        // dataToSend += data.toString();
+        process.stdout.write(data.toString());
     };
 
     shScript.stdout.on("data", collectData);
     shScript.stderr.on("data", collectData);
 
-    // in close event we are sure that stream from child process is closed
-    shScript.on("close", (code) => {
-        console.log(dataToSend);
-        console.log(`child process close all stdio with code ${code}`);
+    // const stopProcess = function (code) {
+    //     console.log(dataToSend);
+    //     console.log(`child process close all stdio with code ${code}`);
+    //     uploadedFileProcessing.inProgress = false;
+    // };
 
-        uploadedFileProcessing.inProgress = false;
-    });
+    // in close event we are sure that stream from child process is closed
+    // shScript.on("close", stopProcess);
+    // shScript.on("error", stopProcess);
+    // shScript.on("exit", stopProcess);
+    // shScript.on("disconnect", stopProcess);
+    // shScript.on("message", stopProcess);
 
     ctx.body = {
         uploadStatus: `file ${ctx.request.file.filename} has been saved on the server`,
