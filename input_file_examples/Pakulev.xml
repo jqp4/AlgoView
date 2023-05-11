@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<algo>
+	<params>
+		<param name = "N" type = "int" value="10"></param>
+	</params>
+	<block id = "0" dims = "2">
+		<arg name = "i" val = "1..N"></arg>
+		<arg name = "j" val = "1..N"></arg>
+		<vertex condition = "(2 * i + j) <= (N + 1)" type = "1">
+		</vertex>
+		<vertex condition = "((2 * i + j) > (N + 1)) and ((i + j) <= N)" type = "1">
+			<in src = "i - 1, j + 2 * (N + 1 - i - j)"></in>
+		</vertex>
+		<vertex condition = "((i + j) > N) and ((2 * i + j) <= (2 * N))" type = "1">
+			<in src = "i, j - 1 - 2 * ((i + j) - N - 1)"></in>
+		</vertex>
+		<vertex condition = "((2 * i + j) > (2 * N)) and ((i + j) <= (2 * N - 1))" type = "1">
+			<in src = "i - 1 * (2 * i + j - 2 * N), 1"></in>
+		</vertex>
+		<vertex condition = "((i + j) > (2 * N - 1))" type = "1">
+		</vertex>
+	</block>
+</algo>

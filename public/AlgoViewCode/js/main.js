@@ -169,7 +169,7 @@ class AlgoViewСonfiguration {
 
         // folderViewSettins.open();
         folderCameraControls.open();
-        folderSceneControls.open();
+        // folderSceneControls.open();
 
         const thisContextTrans = this;
         const controllerContextTrans = this.controllerContext;
