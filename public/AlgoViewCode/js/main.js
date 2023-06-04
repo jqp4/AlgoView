@@ -1032,3 +1032,5 @@ async function renderLoop() {
 const app = new App();
 
 renderLoop();
+
+// future https://github.com/birkir/react-three-gui

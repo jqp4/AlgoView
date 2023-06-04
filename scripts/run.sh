@@ -17,6 +17,10 @@ function draw_info_box() {
 draw_info_box "start run.sh $1"
 cd ./scripts
 
+# удаляем старые файлы
+rm -rf ../public/AlgoViewCode/data/*
+rm -rf output.json
+
 # input.xml --> output.json
 draw_info_box "run main $1"
 ./main $1

@@ -6,7 +6,7 @@ const serve = require("koa-static");
 const Router = require("@koa/router");
 const multer = require("@koa/multer");
 const cors = require("@koa/cors");
-const { spawn } = require("child_process");
+const { exec } = require("child_process");
 const koaStatic = require("koa-static");
 
 const app = new Koa();
@@ -18,11 +18,23 @@ const PORT = 3001;
 // задаем имя папке для скачивания файлов
 // __dirname - папка, откуда запустили этот скрипт. у нас это корень
 const UPLOAD_DIR = path.join(__dirname, "/uploadFiles");
+const LOGS_DIR = path.join(__dirname, "/logs");
+
+function saveLogsToFile(logsData, logsFilename) {
+    const logsPath = path.join(LOGS_DIR, logsFilename);
+
+    fs.writeFile(logsPath, logsData, (err) => {
+        if (err) {
+            console.log("error while saving logs: ", err);
+            console.error("error while saving logs: ", err);
+        }
+    });
+}
 
 // статус обработки загруженного файла
-var uploadedFileProcessing = {
-    inProgress: null,
-};
+// var uploadedFileProcessing = {
+//     inProgress: null,
+// };
 
 // todo
 // let uploadingStatus = uploadedFileProcessing.done;
@@ -48,10 +60,10 @@ router.get("/", (ctx, next) => {
 router.get("/fileUploadPage", (ctx, next) => {
     ctx.type = "html";
 
-    if (uploadedFileProcessing.inProgress) {
-        ctx.body = "Uploaded file processing in progress ...";
-        return next();
-    }
+    // if (uploadedFileProcessing.inProgress) {
+    //     ctx.body = "Uploaded file processing in progress ...";
+    //     return next();
+    // }
 
     ctx.body = fs.createReadStream(
         path.join(__dirname, "public", "/fileUploadPage.html")
@@ -61,7 +73,6 @@ router.get("/fileUploadPage", (ctx, next) => {
 });
 
 // File Uploading
-// пока пропустил
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, UPLOAD_DIR);
@@ -73,46 +84,102 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// router.post("/upload-single-file", upload.single("file"), (ctx) => {
+//     // let dataToSend = "";
+
+//     console.log(
+//         "run scripts/run.sh " + UPLOAD_DIR + "/" + ctx.request.file.filename
+//     );
+
+//     const shScript = spawn(
+//         "sh",
+//         [
+//             "scripts/run.sh",
+//             UPLOAD_DIR + "/" + ctx.request.file.filename, // путь к файлу + имя
+//         ],
+//         (error, stdout, stderr) => {
+//             console.log(stdout);
+//             console.log(stderr);
+//             if (error !== null) {
+//                 console.log(`exec error: ${error}`);
+//             }
+//         }
+//     );
+
+//     // uploadedFileProcessing.inProgress = true;
+
+//     // collect data from script
+//     const collectData = function (data) {
+//         // dataToSend += data.toString();
+//         process.stdout.write(data.toString());
+//     };
+
+//     shScript.stdout.on("data", collectData);
+//     shScript.stderr.on("data", collectData);
+
+//     // const stopProcess = function (code) {
+//     //     console.log(dataToSend);
+//     //     console.log(`child process close all stdio with code ${code}`);
+//     //     uploadedFileProcessing.inProgress = false;
+//     // };
+//     // in close event we are sure that stream from child process is closed
+//     // shScript.on("close", stopProcess);
+//     // shScript.on("error", stopProcess);
+//     // shScript.on("exit", stopProcess);
+//     // shScript.on("disconnect", stopProcess);
+//     // shScript.on("message", stopProcess);
+
+//     ctx.body = {
+//         uploadStatus: `file ${ctx.request.file.filename} has been saved on the server`,
+//         // url: `http://localhost:${PORT}/${ctx.request.file.originalname}`,
+//         url: `/${ctx.request.file.originalname}`,
+//     };
+// });
+
 // add a route for uploading single files
 router.post("/upload-single-file", upload.single("file"), (ctx) => {
-    // Run script
-    // let dataToSend = "";
+    const nowTimeStamp = new Date(Date.now());
+    let logsData = "[" + nowTimeStamp.toUTCString() + "]\n";
 
-    // spawn new child process to call the python script
-    const shScript = spawn("sh", [
-        "scripts/run.sh",
-        // UPLOAD_DIR, // путь к файлу
-        // ctx.request.file.filename, // имя файла
-        UPLOAD_DIR + "/" + ctx.request.file.filename,
-    ]);
+    const filename = ctx.request.file.filename;
+    const command = "sh scripts/run.sh " + UPLOAD_DIR + "/" + filename;
+    console.log("run [" + command + "]");
 
-    uploadedFileProcessing.inProgress = true;
+    // https://stackabuse.com/executing-shell-commands-with-node-js/
+    const shScript = exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`exec error: ${error.message}`);
+            return;
+        }
 
-    // collect data from script
+        if (stderr) {
+            console.log("[there is stderr output]");
+            // console.log(`stderr: ${stderr}`);
+        }
+        if (stdout) {
+            console.log("[there is stdout output]");
+            // console.log(`stdout: ${stdout}`);
+        }
+
+        const logsFilename = "logs-" + nowTimeStamp.toISOString() + ".txt";
+        const logsFilename2 = "latest-logs.txt";
+
+        saveLogsToFile(logsData, logsFilename);
+        saveLogsToFile(logsData, logsFilename2);
+
+        console.log("[done]");
+    });
+
     const collectData = function (data) {
-        // dataToSend += data.toString();
-        process.stdout.write(data.toString());
+        logsData += data.toString();
+        // process.stdout.write(data.toString());
     };
 
     shScript.stdout.on("data", collectData);
     shScript.stderr.on("data", collectData);
 
-    // const stopProcess = function (code) {
-    //     console.log(dataToSend);
-    //     console.log(`child process close all stdio with code ${code}`);
-    //     uploadedFileProcessing.inProgress = false;
-    // };
-
-    // in close event we are sure that stream from child process is closed
-    // shScript.on("close", stopProcess);
-    // shScript.on("error", stopProcess);
-    // shScript.on("exit", stopProcess);
-    // shScript.on("disconnect", stopProcess);
-    // shScript.on("message", stopProcess);
-
     ctx.body = {
         uploadStatus: `file ${ctx.request.file.filename} has been saved on the server`,
-        // url: `http://localhost:${PORT}/${ctx.request.file.originalname}`,
         url: `/${ctx.request.file.originalname}`,
     };
 });
