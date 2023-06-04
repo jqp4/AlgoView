@@ -1,0 +1,24 @@
+<algo>
+
+    <params>
+
+        <param name="m" type="int" value="4"></param>
+        <param name="n" type="int" value="5"></param>
+        <param name="l" type="int" value="6"></param>
+
+    </params>
+
+    <block id="1" dims="3">
+
+        <arg name="i" val="1..m"></arg>
+        <arg name="j" val="1..l"></arg>
+        <arg name="k" val="1..n"></arg>
+        <vertex condition="">
+
+            <in src="i,j,k-1"></in>
+
+        </vertex>
+
+    </block>
+
+</algo>

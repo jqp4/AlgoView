@@ -9,6 +9,7 @@ using namespace graph_manager;
 using namespace algoview_json_traverser;
 using namespace reg_expr;
 using VarsMap = std::map<std::string, double>;
+int cur_block_shift = 0;
 
 Block::Block(const BlockTagInfo& _block_info, int _block_number) {
     const auto& args = _block_info.get_args();
@@ -37,6 +38,9 @@ Block::Block(const BlockTagInfo& _block_info, int _block_number) {
     k_shift_ = 0 - arg[2].begin;
     dim = _block_info.dim;
     block_number = _block_number;
+    if (dim == 3)
+        local_block_shift_ = k_range + 1;
+    cur_block_shift += local_block_shift_;
 }
 
 VertexId Block::get_vertex_id(CoordType i, CoordType j, CoordType k) {
@@ -57,7 +61,7 @@ VertexId Block::create_vertex(VertexMapManager& vertices_manager,
                               CoordType k,
                               std::string type = "0") {
     Vertex* new_vertex_ptr =
-        new Vertex{block_id, i + i_shift_, j + j_shift_, k + k_shift_ + block_number * block_number_shift_, type};
+        new Vertex{block_id, i + i_shift_, j + j_shift_, k + k_shift_ + (cur_block_shift - local_block_shift_), type};
     VertexId new_vertex_id = vertices_manager.add_vertex(new_vertex_ptr);
     std::cerr << "new vertex id " << new_vertex_id << std::endl;
     std::cerr << "i " << i << " i_shift " << i_shift_ << std::endl;
@@ -71,7 +75,7 @@ VertexId Block::create_vertex(VertexMapManager& vertices_manager,
                 std::cout << coords_field_[i][j][k] << " ";
     std::cerr << std::endl;
     std::cerr << "new vertex id " << coords_field_[i + i_shift_][j + j_shift_][k + k_shift_] << std::endl;
-    std::cerr << "21";
+    std::cerr << "successfully created new vertex" << std::endl;
     return new_vertex_id;
 }
 
@@ -115,13 +119,19 @@ void get_src_vertex_coords(const std::string& src_string,
                            CoordType& j,
                            CoordType& k,
                            const VarsMap& vars_map) {
+    std::cerr << "block dim: " << dim << std::endl;
     std::string i_str, j_str, k_str, jk_str;
     if (dim == 1) {
         i = calc_expr(src_string, vars_map);
         j = 0;
         k = 0;
     } else if (dim == 2) {
+        std::cerr << "src_cond: " << src_string << std::endl;
         parse_value(src_string, i_str, j_str, ',');
+        std::cerr << "i_str: " << i_str << "m" << std::endl;
+        std::cerr << "j_str: " << j_str << std::endl;
+        std::cerr << "i_value: " << calc_expr(i_str, vars_map) << std::endl;
+        std::cerr << "j_value: " << calc_expr(j_str, vars_map) << std::endl;
         i = calc_expr(i_str, vars_map);
         j = calc_expr(j_str, vars_map);
         k = 0;
@@ -135,6 +145,15 @@ void get_src_vertex_coords(const std::string& src_string,
     std::cerr << "i src" << i << std::endl;
     std::cerr << "j src" << j << std::endl;
     std::cerr << "k src" << k << std::endl;
+}
+
+int get_max(const std::vector<int>& levels) {
+    int max_level = 0;
+    for (auto level : levels) {
+        if (level > max_level)
+            max_level = level;
+    }
+    return max_level;
 }
 
 void Block::main_cycle(const BlockTagInfo& block_info,
@@ -165,22 +184,25 @@ void Block::main_cycle(const BlockTagInfo& block_info,
                         change_var_value_map(arg[2].name, k, vars_map);
                     //}
                     std::cerr << "10" << std::endl;
-                    std::cerr << calc_expr(vertex.cond, vars_map) << std::endl;
                     if (calc_expr(vertex.cond, vars_map)) {
                         std::cerr << "11";
                         VertexId vertex_id = create_vertex(vertices_manager, block_id, i, j, k, vertex.type);
                         std::cerr << "12";
+                        std::vector<int> src_vertices_levels;
                         for (const auto& src : vertex.src) {
-                            std::cerr << "13";
+                            std::cerr << "traverse src verticies" << std::endl;
                             int src_i, src_j, src_k;
+                            std::cerr << "trying to get src vertex coords" << std::endl;
                             get_src_vertex_coords(src, block_info.dim, src_i, src_j, src_k, vars_map);
                             std::cerr << "i src" << src_i << std::endl;
                             std::cerr << "j src" << src_j << std::endl;
                             std::cerr << "k src" << src_k << std::endl;
                             VertexId src_vertex_id =
                                 get_or_create_source_vertex(vertices_manager, block_id, src_i, src_j, src_k);
+                            // src_vertices_levels.push_back(vertices_manager.get_vertex_level(src_vertex_id));
                             if (src_vertex_id != ignore_vertex_id) {
                                 std::cerr << "Я должен создать связь" << std::endl;
+                                src_vertices_levels.push_back(vertices_manager.get_vertex_level(src_vertex_id));
                                 create_edge(src_vertex_id, vertex_id, edges_manager);
                             }
                         }
@@ -198,10 +220,16 @@ void Block::main_cycle(const BlockTagInfo& block_info,
                             std::cerr << "k bsrc" << bsrc_k << std::endl;
                             VertexId bsrc_vertex_id = bsrc_block_ptr->get_or_create_source_vertex(
                                 vertices_manager, bsrc_block_id, bsrc_i, bsrc_j, bsrc_k);
+                            // src_vertices_levels.push_back(vertices_manager.get_vertex_level(bsrc_vertex_id));
                             if (bsrc_vertex_id != ignore_vertex_id) {
                                 std::cerr << "Я должен создать связь" << std::endl;
+                                src_vertices_levels.push_back(vertices_manager.get_vertex_level(bsrc_vertex_id));
                                 create_edge(bsrc_vertex_id, vertex_id, edges_manager);
                             }
+                        }
+                        if (!src_vertices_levels.empty()) {
+                            int level = get_max(src_vertices_levels) + 1;
+                            vertices_manager.add_vertex_level(vertex_id, level);
                         }
                     }
                 }

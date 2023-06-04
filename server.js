@@ -161,11 +161,9 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
             // console.log(`stdout: ${stdout}`);
         }
 
+        // const logsFilename2 = "latest-logs.txt";
         const logsFilename = "logs-" + nowTimeStamp.toISOString() + ".txt";
-        const logsFilename2 = "latest-logs.txt";
-
         saveLogsToFile(logsData, logsFilename);
-        saveLogsToFile(logsData, logsFilename2);
 
         console.log("[done]");
     });
