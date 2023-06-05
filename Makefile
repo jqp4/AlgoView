@@ -1,7 +1,7 @@
 CONTAINER_PORT=3001
 LOCAL_PORT=3001
 
-IMAGE_NAME = jqp4x/algoview:v1.1
+IMAGE_NAME = jqp4x/algoview:v1.2
 
 build:
 	docker build -t $(IMAGE_NAME) .
@@ -10,7 +10,8 @@ run:
 	docker run -d -p $(LOCAL_PORT):$(CONTAINER_PORT) -v uploadFiles:/app/uploadFiles --rm --name algoview $(IMAGE_NAME)
 	echo "Port: " $(LOCAL_PORT)
 
-run-dev:
+# сломалось, не работает
+run-dev-old:
 	docker run -d -p $(LOCAL_PORT):$(CONTAINER_PORT) -v ".:/app" -v uploadFiles:/app/uploadFiles -v /app/node_modules --rm --name algoview $(IMAGE_NAME)
 	echo "Port: " $(LOCAL_PORT)
 

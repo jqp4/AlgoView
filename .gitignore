@@ -1,4 +1,4 @@
-uploadFiles/*
+uploadFiles
 *_ignore*
 *_tmp*
 .vscode
@@ -232,7 +232,6 @@ cython_debug/
 # Icon must end with two \r
 Icon
 
-
 # Thumbnails
 ._*
 
@@ -366,17 +365,9 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,python,c++,flask
 
-
-
-
-
 # ====================================
 # old from nodejs folder:
 # ====================================
-
-
-
-
 
 # Logs
 logs

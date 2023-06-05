@@ -143,22 +143,22 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
     let logsData = "[" + nowTimeStamp.toUTCString() + "]\n";
 
     const filename = ctx.request.file.filename;
-    const command = "sh scripts/run.sh " + UPLOAD_DIR + "/" + filename;
-    console.log("run [" + command + "]");
+    const command = "/bin/bash scripts/run.sh " + UPLOAD_DIR + "/" + filename;
+    console.log(`[node.js server: run ${command}]`);
 
     // https://stackabuse.com/executing-shell-commands-with-node-js/
     const shScript = exec(command, (error, stdout, stderr) => {
         if (error) {
-            console.log(`exec error: ${error.message}`);
+            console.log(`[node.js server: exec error: ${error.message}]`);
             return;
         }
 
         if (stderr) {
-            console.log("[there is stderr output]");
+            console.log("[node.js server: there is stderr output]");
             // console.log(`stderr: ${stderr}`);
         }
         if (stdout) {
-            console.log("[there is stdout output]");
+            console.log("[node.js server: there is stdout output]");
             // console.log(`stdout: ${stdout}`);
         }
 
@@ -167,12 +167,13 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
         )}.txt`;
 
         saveLogsToFile(logsData, logsFilename);
-        console.log("[done]");
+        console.log(`[node.js server: saved logs as ${logsFilename}`);
+        console.log("[node.js server: done!]");
     });
 
     const collectData = function (data) {
         logsData += data.toString();
-        // process.stdout.write(data.toString());
+        process.stdout.write(data.toString());
     };
 
     shScript.stdout.on("data", collectData);

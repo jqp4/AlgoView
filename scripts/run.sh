@@ -5,13 +5,17 @@ function draw_info_box() {
     local time=$(date +%H:%M:%S)
     local info="    [$date $time] $*    "
 
-    tput setaf 3
+    # tput setaf 3
 
-    echo "┏${info//?/━}┓"
-    echo "┃$(tput setaf 4)$info$(tput setaf 3)┃"
-    echo "┗${info//?/━}┛"
+    # echo "┏${info//?/━}┓"
+    # echo "┃$(tput setaf 4)$info$(tput setaf 3)┃"
+    # echo "┗${info//?/━}┛"
 
-    tput sgr 0
+    # tput sgr 0
+
+    echo "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "┃$info"
+    echo "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
 draw_info_box "start run.sh $1"
@@ -22,7 +26,7 @@ rm -rf ../public/AlgoViewCode/data/*
 rm -rf output.json
 
 # input.xml --> output.json
-draw_info_box "run main $1"
+draw_info_box "run ./main $1"
 ./main $1
 
 # output.json --> jsonGraphData.js
