@@ -8,6 +8,7 @@ const multer = require("@koa/multer");
 const cors = require("@koa/cors");
 const { exec } = require("child_process");
 const koaStatic = require("koa-static");
+const dayjs = require("dayjs");
 
 const app = new Koa();
 const router = new Router();
@@ -161,10 +162,11 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
             // console.log(`stdout: ${stdout}`);
         }
 
-        // const logsFilename2 = "latest-logs.txt";
-        const logsFilename = "logs-" + nowTimeStamp.toISOString() + ".txt";
-        saveLogsToFile(logsData, logsFilename);
+        const logsFilename = `logs-${dayjs(nowTimeStamp).format(
+            "YYYY-MM-DDTHH:mm:ssZ[Z]"
+        )}.txt`;
 
+        saveLogsToFile(logsData, logsFilename);
         console.log("[done]");
     });
 
