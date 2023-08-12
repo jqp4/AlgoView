@@ -1,0 +1,356 @@
+<!-- Метод Гивенса (вращений) QR-разложения квадратной матрицы -->
+<algo>
+    <params>
+        <param name="n" type="int" value="10"></param>
+    </params>
+    <block id="0" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <!-- <block id="1" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="2" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="3" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="4" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="5" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="6" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="7" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="8" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block>
+    <block id="9" dims="3">
+        <arg name="k" val="1..n-1"></arg>
+        <arg name="i" val="1..n-1"></arg>
+        <arg name="j" val="1..n"></arg>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i=k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора 1 яруса
+        <vertex condition="(j>k)and(i>k)and(k=1)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i=k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i=k)" type="1">
+            <in src="k-1,i,j"></in>
+            <in src="k-1,i-1,j"></in>
+        </vertex>
+        выполнение поворота 2-мерного вектора остальных ярусов
+        <vertex condition="(j>k)and(k>1)and(i>k)" type="2">
+            <in src="k,i,k"></in>
+            <in src="k-1,i,j"></in>
+            <in src="k,i-1,j"></in>
+        </vertex>
+        операция вычисления параметров поворота остальных ярусов
+        <vertex condition="(j=k)and(k>1)and(i>k)" type="1">
+            <in src="k-1,i,j"></in>
+        </vertex>
+    </block> -->
+</algo>

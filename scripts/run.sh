@@ -22,7 +22,7 @@ draw_info_box "start run.sh $1"
 cd ./scripts
 
 # удаляем старые файлы
-rm -rf ../public/AlgoViewCode/data/*
+rm -rf ../public/AlgoViewPage/data/*
 rm -rf output.json
 
 # input.xml --> output.json
@@ -31,8 +31,8 @@ draw_info_box "run ./main $1"
 
 # output.json --> jsonGraphData.js
 echo "\n"
-draw_info_box "run python3 json2js.py output.json ../public/AlgoViewCode/data/jsonGraphData.js"
-mkdir -p ../public/AlgoViewCode/data
-python3 json2js.py output.json ../public/AlgoViewCode/data/jsonGraphData.js
+draw_info_box "run python3 json2js.py output.json ../public/AlgoViewPage/data/jsonGraphData.js"
+mkdir -p ../public/AlgoViewPage/data
+python3 json2js.py output.json ../public/AlgoViewPage/data/jsonGraphData.js
 
 draw_info_box "done!"

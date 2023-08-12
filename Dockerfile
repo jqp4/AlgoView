@@ -8,7 +8,7 @@ SHELL [ "/bin/bash", "-l", "-c" ]
 RUN npm install
 RUN mkdir -p logs
 RUN mkdir -p uploadFiles
-RUN mkdir -p public/AlgoViewCode/data
+RUN mkdir -p public/AlgoViewPage/data
 
 RUN (rm -rf scripts/main && cd ./architect && make && mv main ../scripts)
 

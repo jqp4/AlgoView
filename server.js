@@ -15,6 +15,7 @@ const router = new Router();
 
 // порт на котором откроется сервер
 const PORT = 3001;
+const BASH_SCRIPT_DEBUG = true;
 
 // задаем имя папке для скачивания файлов
 // __dirname - папка, откуда запустили этот скрипт. у нас это корень
@@ -52,7 +53,7 @@ router.get("/", (ctx, next) => {
     ctx.type = "html";
 
     ctx.body = fs.createReadStream(
-        path.join(__dirname, "public", "/AlgoViewCode/AlgoView.html")
+        path.join(__dirname, "public", "/AlgoViewPage/AlgoViewPage.html")
     );
 
     next();
@@ -67,7 +68,7 @@ router.get("/fileUploadPage", (ctx, next) => {
     // }
 
     ctx.body = fs.createReadStream(
-        path.join(__dirname, "public", "/fileUploadPage.html")
+        path.join(__dirname, "public", "/fileUploadPage/fileUploadPage.html")
     );
 
     next();
@@ -173,7 +174,9 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
 
     const collectData = function (data) {
         logsData += data.toString();
-        process.stdout.write(data.toString());
+        if (BASH_SCRIPT_DEBUG) {
+            process.stdout.write(data.toString());
+        }
     };
 
     shScript.stdout.on("data", collectData);
@@ -186,7 +189,8 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
 });
 
 // подключаем стили и мои дополнительные модули к THREE
-app.use(koaStatic(path.join(__dirname, "public/AlgoViewCode")));
+app.use(koaStatic(path.join(__dirname, "public/AlgoViewPage")));
+app.use(koaStatic(path.join(__dirname, "public/fileUploadPage")));
 
 app.use(cors());
 app.use(router.routes()).use(router.allowedMethods());
