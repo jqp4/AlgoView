@@ -406,7 +406,57 @@ class GraphicObjects {
         config.graph.add(mesh);
     }
 
-    static #createMeshLine(sourceVector3, targetVector3, colorIndex) {
+    static #createCurvedMeshLine(sourceVector3, targetVector3, colorIndex) {
+        const vector = new THREE.Vector3();
+        // длина вектора. Рассмотрим вектор AB{len, 0, 0}, исходящий из начала координат
+        const len = sourceVector3.distanceTo(targetVector3);
+
+        // радиус окружности
+        const r = len / 1.6;
+
+        // координаты центра окружности
+        const x0 = len / 2;
+        const y0 = -Math.sqrt(Math.pow(r, 2) - Math.pow(x0, 2));
+        // const z0 = 0;
+
+        const x = (t) => x0 + r * Math.cos(t);
+        const y = (t) => y0 + r * Math.sin(t);
+        // const z = (r, t) => 0;
+
+        // количество кусочков на которое будет разбита кривая
+        const n = Math.ceil(len * 5);
+
+        // границы параметра
+        const t0 = Math.acos(x0 / r); // находится в точке B
+        const t1 = Math.PI - t0; // находится в точке A
+        const tShift = (t1 - t0) / n;
+
+        var lineGeometry = new Float32Array((n + 1) * 3);
+        for (var j = 0; j <= n; j += 1) {
+            let t = t0 + tShift * j;
+
+            lineGeometry[j * 3] = sourceVector3.x + x(t);
+            lineGeometry[j * 3 + 1] = sourceVector3.y + y(t);
+            lineGeometry[j * 3 + 2] = sourceVector3.z;
+        }
+
+        const meshLine = new MeshLine();
+        meshLine.setGeometry(lineGeometry);
+
+        const material = new MeshLineMaterial({
+            useMap: false,
+            color: new THREE.Color(colors[colorIndex]),
+            opacity: 1,
+            resolution: config.resolution,
+            sizeAttenuation: false,
+            lineWidth: config.params.lineWidth,
+        });
+
+        const mesh = new THREE.Mesh(meshLine.geometry, material);
+        config.graph.add(mesh);
+    }
+
+    static #createStraightMeshLine(sourceVector3, targetVector3, colorIndex) {
         const line = new THREE.Geometry();
         line.vertices.push(sourceVector3);
         line.vertices.push(targetVector3);
@@ -445,9 +495,22 @@ class GraphicObjects {
      * @param {THREE.Vector3} targetVector3 вектор целевой точки
      * @param {number} colorIndex индекс в цветовом массиве
      */
-    static createLine(sourceVector3, targetVector3, colorIndex) {
-        this.#createMeshLine(sourceVector3, targetVector3, colorIndex);
+    static #createLine(sourceVector3, targetVector3, isCurved, colorIndex) {
         // this.createSimpleLine(sourceVector3, targetVector3, colorIndex);
+
+        if (isCurved) {
+            this.#createCurvedMeshLine(
+                sourceVector3,
+                targetVector3,
+                colorIndex
+            );
+        } else {
+            this.#createStraightMeshLine(
+                sourceVector3,
+                targetVector3,
+                colorIndex
+            );
+        }
     }
 
     /** Создает сферу по заданным координатам */
@@ -500,8 +563,8 @@ class GraphicObjects {
         config.graph.add(mesh);
     }
 
-    /** Создает стрелку по двум векторам */
-    static createArrow(sourceVector3, targetVector3, colorIndex = 3) {
+    /** Создает прямую стрелку по двум векторам */
+    static createStraightArrow(sourceVector3, targetVector3, colorIndex = 3) {
         const arrowVector3 = new THREE.Vector3(
             targetVector3.x - sourceVector3.x,
             targetVector3.y - sourceVector3.y,
@@ -524,24 +587,64 @@ class GraphicObjects {
         );
 
         // линия
-        this.createLine(sourceVector3, croppedTargetVector3, colorIndex);
+        this.#createStraightMeshLine(
+            sourceVector3,
+            croppedTargetVector3,
+            colorIndex
+        );
 
         // конус
+        this.#createCone(croppedTargetVector3, targetVector3, colorIndex);
+    }
+
+    /** Создает кривую стрелку по двум векторам */
+    static createCurvedArrow(sourceVector3, targetVector3, colorIndex = 3) {
+        const arrowVector3 = new THREE.Vector3(
+            targetVector3.x - sourceVector3.x,
+            targetVector3.y - sourceVector3.y,
+            targetVector3.z - sourceVector3.z
+        );
+
+        /** Половина высоты конуса у стрелки + радиус большого шара */
+        const shiftLength = 1.8 / 2 + 1.8;
+        const arrowNormalizeVector3 = arrowVector3.normalize();
+        const shiftVector3 = new THREE.Vector3(
+            arrowNormalizeVector3.x * shiftLength,
+            arrowNormalizeVector3.y * shiftLength,
+            arrowNormalizeVector3.z * shiftLength
+        );
+
+        const croppedTargetVector3 = new THREE.Vector3(
+            targetVector3.x - shiftVector3.x,
+            targetVector3.y - shiftVector3.y,
+            targetVector3.z - shiftVector3.z
+        );
+
+        // линия
+        this.#createCurvedMeshLine(sourceVector3, targetVector3, colorIndex);
+
+        // конус
+        this.#createCone(croppedTargetVector3, targetVector3, colorIndex);
+    }
+
+    /** Создает конус по заданным координатам и направдлению вершины конуса */
+    static #createCone(locationVector3, targetVector3, colorIndex) {
         const coneMesh = this.#getConeMesh(colorIndex);
         coneMesh.rotation.x = Math.PI / 2;
 
         const cone = new THREE.Object3D();
         cone.add(coneMesh);
         cone.position.set(
-            croppedTargetVector3.x,
-            croppedTargetVector3.y,
-            croppedTargetVector3.z
+            locationVector3.x,
+            locationVector3.y,
+            locationVector3.z
         );
 
         cone.lookAt(targetVector3.x, targetVector3.y, targetVector3.z);
         config.graph.add(cone);
     }
 
+    /** Возвращает THREE.Mesh для конуса */
     static #getConeMesh(colorIndex = 3) {
         // конус
         // https://customizer.github.io/three.js-doc.ru/geometries/coneBufferGeometry.htm
@@ -573,17 +676,17 @@ class GraphicObjects {
      * @param {number} oxAxisLength
      */
     static createAxis(oxAxisLength, oyAxisLength, ozAxisLength) {
-        this.createArrow(
+        this.createStraightArrow(
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(oxAxisLength, 0, 0)
         );
 
-        this.createArrow(
+        this.createStraightArrow(
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, oyAxisLength, 0)
         );
 
-        this.createArrow(
+        this.createStraightArrow(
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, ozAxisLength)
         );
@@ -665,11 +768,12 @@ class DataLoader {
     static emptyGraphDataTemplate = { vertices: [], edges: [] };
 
     constructor() {
-        this.graphData = this.emptyGraphDataTemplate;
+        this.graphData = DataLoader.emptyGraphDataTemplate;
     }
 
     loadGraphData() {
         // jsonGraphData загружена в html страничке
+        // !!!
         this.graphData = JSON.parse(jsonGraphData);
 
         return this.graphData;
@@ -684,6 +788,7 @@ class Model {
     constructor() {
         const dataLoader = new DataLoader();
         this.graphData = dataLoader.loadGraphData();
+
         this.graph = new Graph(this.graphData);
     }
 }
@@ -820,7 +925,7 @@ class View {
      * @param {Edge} edge - ребро, экземпляр класса `Edge`.
      */
     buildEdgeObject(edge) {
-        GraphicObjects.createArrow(
+        GraphicObjects.createCurvedArrow(
             edge.sourceVertex.pos,
             edge.targetVertex.pos,
             6
