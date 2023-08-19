@@ -407,12 +407,28 @@ class GraphicObjects {
     }
 
     static #createCurvedMeshLine(sourceVector3, targetVector3, colorIndex) {
-        const vector = new THREE.Vector3();
+        const r3 = new THREE.Vector3(
+            sourceVector3.x * 7,
+            sourceVector3.y * 7,
+            sourceVector3.z * 7
+        );
+
+        console.log(r3);
+
+        const vector = new THREE.Vector3().subVectors(
+            targetVector3,
+            sourceVector3
+        );
+
+        const ttt = new THREE.Vector3().addScaledVector(sourceVector3, 7);
+
+        console.log(ttt);
+
         // длина вектора. Рассмотрим вектор AB{len, 0, 0}, исходящий из начала координат
         const len = sourceVector3.distanceTo(targetVector3);
 
         // радиус окружности
-        const r = len / 1.6;
+        const r = len * 0.9;
 
         // координаты центра окружности
         const x0 = len / 2;
@@ -429,11 +445,11 @@ class GraphicObjects {
         // границы параметра
         const t0 = Math.acos(x0 / r); // находится в точке B
         const t1 = Math.PI - t0; // находится в точке A
-        const tShift = (t1 - t0) / n;
+        const tStep = (t1 - t0) / n;
 
         var lineGeometry = new Float32Array((n + 1) * 3);
         for (var j = 0; j <= n; j += 1) {
-            let t = t0 + tShift * j;
+            let t = t0 + tStep * j;
 
             lineGeometry[j * 3] = sourceVector3.x + x(t);
             lineGeometry[j * 3 + 1] = sourceVector3.y + y(t);
@@ -513,77 +529,25 @@ class GraphicObjects {
         }
     }
 
-    /** Создает сферу по заданным координатам */
-    static createSphere(x, y, z, colorIndex = 1, sphereRadius = 2) {
-        // const sphereRadius = 2;
-        const sphereWidthDivisions = 16;
-        const sphereHeightDivisions = 16;
-        const sphereGeo = new THREE.SphereGeometry(
-            sphereRadius,
-            sphereWidthDivisions,
-            sphereHeightDivisions
-        );
-
-        const sphereMat = new THREE.MeshPhongMaterial({
-            color: colors[colorIndex],
-        });
-
-        const mesh = new THREE.Mesh(sphereGeo, sphereMat);
-        mesh.position.set(x, y, z);
-        config.graph.add(mesh);
-    }
-
-    /** Создает куб по заданным координатам */
-    static createCube(x, y, z, colorIndex = 1) {
-        const cubeSize = 2;
-        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
-
-        // const cubeMat = new THREE.MeshPhongMaterial({ color: "#8AC" });
-        const cubeMat = new THREE.MeshPhongMaterial({
-            color: colors[colorIndex],
-        });
-
-        const mesh = new THREE.Mesh(cubeGeo, cubeMat);
-        mesh.position.set(x, y, z);
-        config.graph.add(mesh);
-    }
-
-    /** Создает октаэдр по заданным координатам */
-    static createOctahedron(x, y, z, colorIndex) {
-        // https://threejs.org/docs/#api/en/geometries/OctahedronGeometry
-
-        const octahedronRadius = 1.8;
-        const octahedronGeo = new THREE.OctahedronGeometry(octahedronRadius);
-        const octahedronMat = new THREE.MeshPhongMaterial({
-            color: colors[colorIndex],
-        });
-
-        const mesh = new THREE.Mesh(octahedronGeo, octahedronMat);
-        mesh.position.set(x, y, z);
-        config.graph.add(mesh);
-    }
-
     /** Создает прямую стрелку по двум векторам */
     static createStraightArrow(sourceVector3, targetVector3, colorIndex = 3) {
-        const arrowVector3 = new THREE.Vector3(
-            targetVector3.x - sourceVector3.x,
-            targetVector3.y - sourceVector3.y,
-            targetVector3.z - sourceVector3.z
+        const arrowVector3 = new THREE.Vector3().subVectors(
+            targetVector3,
+            sourceVector3
         );
 
         /** Половина высоты конуса у стрелки + радиус большого шара */
         const shiftLength = 1.8 / 2 + 1.8;
-        const arrowNormalizeVector3 = arrowVector3.normalize();
-        const shiftVector3 = new THREE.Vector3(
-            arrowNormalizeVector3.x * shiftLength,
-            arrowNormalizeVector3.y * shiftLength,
-            arrowNormalizeVector3.z * shiftLength
-        );
 
-        const croppedTargetVector3 = new THREE.Vector3(
-            targetVector3.x - shiftVector3.x,
-            targetVector3.y - shiftVector3.y,
-            targetVector3.z - shiftVector3.z
+        /** Получаем отступ от целевой вершины для создания острия стрелки */
+        const shiftVector3 = new THREE.Vector3()
+            .copy(arrowVector3)
+            .normalize() // нормализация (приведение к вектору длины 1)
+            .multiplyScalar(shiftLength); // + умножение на скаляр
+
+        const croppedTargetVector3 = new THREE.Vector3().subVectors(
+            targetVector3,
+            shiftVector3
         );
 
         // линия
@@ -599,25 +563,23 @@ class GraphicObjects {
 
     /** Создает кривую стрелку по двум векторам */
     static createCurvedArrow(sourceVector3, targetVector3, colorIndex = 3) {
-        const arrowVector3 = new THREE.Vector3(
-            targetVector3.x - sourceVector3.x,
-            targetVector3.y - sourceVector3.y,
-            targetVector3.z - sourceVector3.z
+        const arrowVector3 = new THREE.Vector3().subVectors(
+            targetVector3,
+            sourceVector3
         );
 
         /** Половина высоты конуса у стрелки + радиус большого шара */
         const shiftLength = 1.8 / 2 + 1.8;
-        const arrowNormalizeVector3 = arrowVector3.normalize();
-        const shiftVector3 = new THREE.Vector3(
-            arrowNormalizeVector3.x * shiftLength,
-            arrowNormalizeVector3.y * shiftLength,
-            arrowNormalizeVector3.z * shiftLength
-        );
 
-        const croppedTargetVector3 = new THREE.Vector3(
-            targetVector3.x - shiftVector3.x,
-            targetVector3.y - shiftVector3.y,
-            targetVector3.z - shiftVector3.z
+        /** Получаем отступ от целевой вершины для создания острия стрелки */
+        const shiftVector3 = new THREE.Vector3()
+            .copy(arrowVector3)
+            .normalize() // нормализация (приведение к вектору длины 1)
+            .multiplyScalar(shiftLength); // + умножение на скаляр
+
+        const croppedTargetVector3 = new THREE.Vector3().subVectors(
+            targetVector3,
+            shiftVector3
         );
 
         // линия
@@ -760,6 +722,56 @@ class GraphicObjects {
         config.graph.add(ambientLight);
 
         return light;
+    }
+
+    /** Создает сферу по заданным координатам */
+    static createSphere(x, y, z, colorIndex = 1, sphereRadius = 2) {
+        // const sphereRadius = 2;
+        const sphereWidthDivisions = 16;
+        const sphereHeightDivisions = 16;
+        const sphereGeo = new THREE.SphereGeometry(
+            sphereRadius,
+            sphereWidthDivisions,
+            sphereHeightDivisions
+        );
+
+        const sphereMat = new THREE.MeshPhongMaterial({
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает куб по заданным координатам */
+    static createCube(x, y, z, colorIndex = 1) {
+        const cubeSize = 2;
+        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+        // const cubeMat = new THREE.MeshPhongMaterial({ color: "#8AC" });
+        const cubeMat = new THREE.MeshPhongMaterial({
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(cubeGeo, cubeMat);
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает октаэдр по заданным координатам */
+    static createOctahedron(x, y, z, colorIndex) {
+        // https://threejs.org/docs/#api/en/geometries/OctahedronGeometry
+
+        const octahedronRadius = 1.8;
+        const octahedronGeo = new THREE.OctahedronGeometry(octahedronRadius);
+        const octahedronMat = new THREE.MeshPhongMaterial({
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(octahedronGeo, octahedronMat);
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
     }
 }
 
@@ -925,6 +937,7 @@ class View {
      * @param {Edge} edge - ребро, экземпляр класса `Edge`.
      */
     buildEdgeObject(edge) {
+        // !!!
         GraphicObjects.createCurvedArrow(
             edge.sourceVertex.pos,
             edge.targetVertex.pos,
