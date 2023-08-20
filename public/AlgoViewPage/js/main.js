@@ -487,13 +487,30 @@ class GraphicObjects {
         const n = Math.ceil((t1 - t0) * r * 3);
         const tStep = (t1 - t0) / n;
 
-        var lineGeometry = new Float32Array((n + 1) * 3);
-        for (var j = 0; j <= n; j += 1) {
-            let t = t0 + tStep * j;
+        /** Вектора нового базиса (соотв изначальному графу) */
+        const n1 = new THREE.Vector3(1, 0, 0).normalize();
+        const n2 = new THREE.Vector3(0, 1, 0).normalize();
+        const n3 = new THREE.Vector3(0, 0, 1).normalize();
 
-            lineGeometry[j * 3] = sourceVector3.x + x(t);
-            lineGeometry[j * 3 + 1] = sourceVector3.y + y(t);
-            lineGeometry[j * 3 + 2] = sourceVector3.z;
+        /** Матрица перехода к нового базису */
+        const A = new THREE.Matrix3();
+        A.set(n1.x, n2.x, n3.x, n1.y, n2.y, n3.y, n1.z, n2.z, n3.z);
+        // console.log(A);
+        // let B = new THREE.Matrix3().copy(A).invert();
+        // console.log(B);
+
+        const lineGeometry = new Float32Array((n + 1) * 3);
+        for (let j = 0; j <= n; j += 1) {
+            const t = t0 + tStep * j;
+            const _x = x(t);
+            const _y = y(t);
+
+            lineGeometry[j * 3] =
+                sourceVector3.x + A.elements[0] * _x + A.elements[1] * _y;
+            lineGeometry[j * 3 + 1] =
+                sourceVector3.y + A.elements[3] * _x + A.elements[4] * _y;
+            lineGeometry[j * 3 + 2] =
+                sourceVector3.z + A.elements[6] * _x + A.elements[7] * _y;
         }
 
         // линия
