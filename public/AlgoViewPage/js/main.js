@@ -458,12 +458,117 @@ class GraphicObjects {
         this.#createCone(croppedTargetVector3, targetVector3, colorIndex);
     }
 
+    // /** https://www.notion.so/2ad0489562bc43b8a76345d4feda84ba */
+    // static #getTransitionMatrixToInitialBasis(arrowVector3) {
+    //     /** Вектора нового базиса (соотв изначальному графу) */
+    //     const n1 = new THREE.Vector3().copy(arrowVector3).normalize();
+    //     const n2 = new THREE.Vector3();
+    //     const n3 = new THREE.Vector3();
+
+    //     // геометрически рассчитываем второй базисный вектор n2
+
+    //     if (n1.y == 0) {
+    //         n2.set(0, 1, 0);
+    //     } else {
+    //         const n1x = Math.abs(n1.x);
+    //         const n1y = Math.abs(n1.y);
+    //         const n1z = Math.abs(n1.z);
+
+    //         const beta = Math.PI / 2 - Math.asin(n1y / 1);
+    //         const b = n1y / Math.tan(beta);
+
+    //         const gamma = Math.atan(n1z / n1x);
+    //         const n2x = b * Math.cos(gamma);
+    //         const n2z = b * Math.sin(gamma);
+
+    //         n2.set(-n2x, n1.y, n2z).normalize();
+    //     }
+
+    //     // рассчитываем второй базисный вектор n3
+    //     // n3 = new THREE.Vector3().multiplyVectors(n1, n2).normalize();
+    //     n3.set(0, 0, 1);
+
+    //     console.log(n1.x, n1.y, n1.z);
+    //     console.log(n2.x, n2.y, n2.z);
+    //     console.log(n3.x, n3.y, n3.z);
+    //     console.log("\n");
+
+    //     /** Матрица перехода к нового базису */
+    //     const A = new THREE.Matrix3();
+    //     A.set(n1.x, n2.x, n3.x, n1.y, n2.y, n3.y, n1.z, n2.z, n3.z);
+
+    //     console.log(A);
+    //     const B = new THREE.Matrix3().copy(A).invert();
+    //     console.log(B);
+    //     console.log("\n");
+
+    //     return B;
+    // }
+
+    /** https://www.notion.so/2ad0489562bc43b8a76345d4feda84ba */
+    static #getTransitionMatrixToInitialBasis(arrowVector3) {
+        /** Вектора нового базиса (соотв изначальному графу) */
+        const n1 = new THREE.Vector3().copy(arrowVector3).normalize();
+        const n2 = new THREE.Vector3();
+        const n3 = new THREE.Vector3();
+
+        // геометрически рассчитываем второй базисный вектор n2
+
+        if (n1.y == 0) {
+            n2.set(0, 1, 0);
+        } else {
+            const n1x = Math.abs(n1.x);
+            const n1y = Math.abs(n1.y);
+            const n1z = Math.abs(n1.z);
+
+            const beta = Math.PI / 2 - Math.asin(n1y / 1);
+            const b = n1y / Math.tan(beta);
+
+            const gamma = Math.atan(n1z / n1x);
+            const n2x = b * Math.cos(gamma);
+            const n2z = b * Math.sin(gamma);
+
+            n2.set(-n2x, n1.y, -n2z).normalize();
+        }
+
+        // рассчитываем второй базисный вектор n3
+        // n3 = new THREE.Vector3().multiplyVectors(n1, n2).normalize();
+        n3.set(0, 0, 1);
+
+        console.log(n1.x, n1.y, n1.z);
+        console.log(n2.x, n2.y, n2.z);
+        console.log(n3.x, n3.y, n3.z);
+
+        /** Матрица перехода к нового базису */
+        // const A = new THREE.Matrix3();
+        // A.set(n1.x, n2.x, n3.x, n1.y, n2.y, n3.y, n1.z, n2.z, n3.z);
+
+        const M = [
+            [n1.x, n2.x, n3.x],
+            [n1.y, n2.y, n3.y],
+            [n1.z, n2.z, n3.z],
+        ];
+
+        const M_inv = new Matrix.create(M).inverse().elements;
+
+        console.log(M_inv);
+        console.log("\n");
+
+        return M_inv;
+    }
+
     /** Создает кривую стрелку по двум векторам */
     static createCurvedArrow(sourceVector3, targetVector3, colorIndex = 3) {
         /** Половина высоты конуса у стрелки + радиус большого шара */
         const arrowShiftLength = 1.8 / 2 + 1.8;
 
-        /** длина вектора. Рассмотрим вектор AB{len, 0, 0}, исходящий из начала координат */
+        const arrowVector3 = new THREE.Vector3().subVectors(
+            targetVector3,
+            sourceVector3
+        );
+
+        /** длина вектора. Рассмотрим вектор AB{len, 0, 0},
+         *  исходящий из начала координат */
         const len = sourceVector3.distanceTo(targetVector3);
 
         /** радиус окружности */
@@ -479,25 +584,25 @@ class GraphicObjects {
         // const z = (r, t) => 0;
 
         /** границы параметра */
-        const tArrowShift = arrowShiftLength / r; // tArrowShift = 2pi * shiftLength / 2piR
-        const t0 = Math.acos(x0 / r) + tArrowShift; // находится некотором удалении от точки B
-        const t1 = Math.PI - Math.acos(x0 / r); // находится в точке A
+
+        // tArrowShift = 2pi * shiftLength / 2piR
+        const tArrowShift = arrowShiftLength / r;
+
+        // находится некотором удалении от точки B
+        const t0 = Math.acos(x0 / r) + tArrowShift;
+
+        // находится в точке A
+        const t1 = Math.PI - Math.acos(x0 / r);
 
         /** количество кусочков на которое будет разбита кривая */
         const n = Math.ceil((t1 - t0) * r * 3);
         const tStep = (t1 - t0) / n;
 
-        /** Вектора нового базиса (соотв изначальному графу) */
-        const n1 = new THREE.Vector3(1, 0, 0).normalize();
-        const n2 = new THREE.Vector3(0, 1, 0).normalize();
-        const n3 = new THREE.Vector3(0, 0, 1).normalize();
+        // const A = new THREE.Matrix3().copy(
+        //     this.#getTransitionMatrixToInitialBasis(arrowVector3)
+        // );
 
-        /** Матрица перехода к нового базису */
-        const A = new THREE.Matrix3();
-        A.set(n1.x, n2.x, n3.x, n1.y, n2.y, n3.y, n1.z, n2.z, n3.z);
-        // console.log(A);
-        // let B = new THREE.Matrix3().copy(A).invert();
-        // console.log(B);
+        const A_inv = this.#getTransitionMatrixToInitialBasis(arrowVector3);
 
         const lineGeometry = new Float32Array((n + 1) * 3);
         for (let j = 0; j <= n; j += 1) {
@@ -505,12 +610,19 @@ class GraphicObjects {
             const _x = x(t);
             const _y = y(t);
 
+            // lineGeometry[j * 3] =
+            //     sourceVector3.x + A.elements[0] * _x + A.elements[1] * _y;
+            // lineGeometry[j * 3 + 1] =
+            //     sourceVector3.y + A.elements[3] * _x + A.elements[4] * _y;
+            // lineGeometry[j * 3 + 2] =
+            //     sourceVector3.z + A.elements[6] * _x + A.elements[7] * _y;
+
             lineGeometry[j * 3] =
-                sourceVector3.x + A.elements[0] * _x + A.elements[1] * _y;
+                sourceVector3.x + A_inv[0][0] * _x + A_inv[0][1] * _y;
             lineGeometry[j * 3 + 1] =
-                sourceVector3.y + A.elements[3] * _x + A.elements[4] * _y;
+                sourceVector3.y + A_inv[1][0] * _x + A_inv[1][1] * _y;
             lineGeometry[j * 3 + 2] =
-                sourceVector3.z + A.elements[6] * _x + A.elements[7] * _y;
+                sourceVector3.z + A_inv[2][0] * _x + A_inv[2][1] * _y;
         }
 
         // линия
