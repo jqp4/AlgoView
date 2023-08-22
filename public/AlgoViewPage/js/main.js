@@ -553,7 +553,7 @@ class GraphicObjects {
         const len = sourceVector3.distanceTo(targetVector3);
 
         /** радиус окружности */
-        const r = len * 0.9;
+        const r = len * 1.1;
 
         /** координаты центра окружности */
         const x0 = len / 2;
@@ -572,8 +572,8 @@ class GraphicObjects {
         const tStep = (t1 - t0) / n;
 
         const mTrans = this.#getTransitionMatrixToInitialBasis(arrowVector3);
-
         const lineGeometry = new Float32Array((n + 1) * 3);
+
         for (let j = 0; j <= n; j += 1) {
             const t = t0 + tStep * j;
             const _x = x(t);
