@@ -512,11 +512,52 @@ class GraphicObjects {
         const n2 = new THREE.Vector3();
         const n3 = new THREE.Vector3();
 
+        /** функция векторного произведения векторов */
+        function cross(a, b) {
+            const rx = a.y * b.z - a.z * b.y;
+            const ry = a.z * b.x - a.x * b.z;
+            const rz = a.x * b.y - a.y * b.x;
+            return new THREE.Vector3(rx, ry, rz);
+        }
+
         // геометрически рассчитываем второй базисный вектор n2
 
-        if (n1.y == 0) {
-            n2.set(0, 1, 0);
+        if (n1.x != 0 && n1.y == 0 && n1.z == 0) {
+            // ось OX
+            console.log("ось OX");
+            n2.set(0, -1, 0);
+            // n3.set(0, 0, 1);
+        } else if (n1.x == 0 && n1.y != 0 && n1.z == 0) {
+            // ось OY
+            console.log("ось OY");
+            n2.set(-1, 0, -1).normalize();
+            // n3.set(0, 0, 0).normalize();
+        } else if (n1.x == 0 && n1.y == 0 && n1.z != 0) {
+            // ось OZ
+            console.log("ось OZ");
+            n2.set(0, -1, 0);
+            // n3.set(1, 0, 0);
+        } else if (n1.x != 0 && n1.y != 0 && n1.z == 0) {
+            // плоскость OXY
+            console.log("плоскость OXY");
+            n3.set(0, 0, 1);
+            // n2.copy(cross(n1, n3));
+        } else if (n1.x == 0 && n1.y != 0 && n1.z != 0) {
+            // плоскость OYZ
+            console.log("плоскость OYZ");
+            // n2.set(-1, 0, 0);
+            // n3.copy(cross(n1, n2)).multiplyScalar(-1);
+            n3.set(-1, 0, 0);
+            // n2.copy(cross(n1, n3));
+        } else if (n1.x != 0 && n1.y == 0 && n1.z != 0) {
+            // плоскость OXZ
+            console.log("плоскость OXZ");
+            n2.set(0, -1, 0);
+            // n3.copy(cross(n1, n2));
         } else {
+            // Общий случай
+            console.log("Общий случай");
+
             const n1x = Math.abs(n1.x);
             const n1y = Math.abs(n1.y);
             const n1z = Math.abs(n1.z);
@@ -524,24 +565,36 @@ class GraphicObjects {
             const beta = Math.PI / 2 - Math.asin(n1y / 1);
             const b = n1y / Math.tan(beta);
 
+            console.log("beta = ", (beta * 180) / Math.PI);
+            console.log("b = ", b);
+
             const gamma = Math.atan(n1z / n1x);
             const n2x = b * Math.cos(gamma);
             const n2z = b * Math.sin(gamma);
 
+            console.log("gamma = ", (gamma * 180) / Math.PI);
+
             n2.set(-n2x, n1.y, -n2z).normalize();
+            // n3.copy(cross(n1, n2));
+
+            // n3.set(-n2x, n1.y, -n2z).normalize();
+            // n2.copy(cross(n1, n3));
         }
 
-        // рассчитываем второй базисный вектор n3
-        // n3 = new THREE.Vector3().multiplyVectors(n1, n2).normalize();
-        n3.set(0, 0, 1);
+        n3.copy(cross(n1, n2));
 
         console.log(n1.x, n1.y, n1.z);
         console.log(n2.x, n2.y, n2.z);
         console.log(n3.x, n3.y, n3.z);
 
-        /** Матрица перехода к нового базису */
-        // const A = new THREE.Matrix3();
-        // A.set(n1.x, n2.x, n3.x, n1.y, n2.y, n3.y, n1.z, n2.z, n3.z);
+        // const M = [
+        //     [-1,  2, -2],
+        //     [ 2, -1,  5],
+        //     [ 3, -2,  4],
+        // ];
+        //  0,6  -0,4   0,8
+        //  0,7   0,2   0,1
+        // -0,1   0,4  -0,3
 
         const M = [
             [n1.x, n2.x, n3.x],
@@ -549,9 +602,17 @@ class GraphicObjects {
             [n1.z, n2.z, n3.z],
         ];
 
-        const M_inv = new Matrix.create(M).inverse().elements;
+        // const M = [
+        //     [n2.x, n1.x, n3.x],
+        //     [n2.y, n1.y, n3.y],
+        //     [n2.z, n1.z, n3.z],
+        // ];
 
-        console.log(M_inv);
+        /** Матрица перехода к нового базису */
+        // const M_inv = new Matrix.create(M).inverse().elements;
+        const M_inv = new Matrix.create(M).elements;
+
+        // console.log(M_inv);
         console.log("\n");
 
         return M_inv;
@@ -598,10 +659,6 @@ class GraphicObjects {
         const n = Math.ceil((t1 - t0) * r * 3);
         const tStep = (t1 - t0) / n;
 
-        // const A = new THREE.Matrix3().copy(
-        //     this.#getTransitionMatrixToInitialBasis(arrowVector3)
-        // );
-
         const A_inv = this.#getTransitionMatrixToInitialBasis(arrowVector3);
 
         const lineGeometry = new Float32Array((n + 1) * 3);
@@ -609,13 +666,6 @@ class GraphicObjects {
             const t = t0 + tStep * j;
             const _x = x(t);
             const _y = y(t);
-
-            // lineGeometry[j * 3] =
-            //     sourceVector3.x + A.elements[0] * _x + A.elements[1] * _y;
-            // lineGeometry[j * 3 + 1] =
-            //     sourceVector3.y + A.elements[3] * _x + A.elements[4] * _y;
-            // lineGeometry[j * 3 + 2] =
-            //     sourceVector3.z + A.elements[6] * _x + A.elements[7] * _y;
 
             lineGeometry[j * 3] =
                 sourceVector3.x + A_inv[0][0] * _x + A_inv[0][1] * _y;

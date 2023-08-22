@@ -1,0 +1,21 @@
+{
+    "vertices": [
+        { "id": 0, "coordinates": [0, 0, 0], "type": "1" },
+        { "id": 1, "coordinates": [0, 1, 0], "type": "1" },
+        { "id": 2, "coordinates": [0, 0, 1], "type": "1" },
+        { "id": 3, "coordinates": [1, 1, 0], "type": "1" },
+        { "id": 4, "coordinates": [0, 1, 1], "type": "1" },
+        { "id": 5, "coordinates": [1, 0, 1], "type": "1" },
+        { "id": 6, "coordinates": [1, 1, 1], "type": "1" },
+        { "id": 7, "coordinates": [1, 0, 0], "type": "1" }
+    ],
+    "edges": [
+        { "id": 0, "sourceVertexId": 0, "targetVertexId": 1, "type": "0" },
+        { "id": 1, "sourceVertexId": 0, "targetVertexId": 2, "type": "0" },
+        { "id": 6, "sourceVertexId": 0, "targetVertexId": 7, "type": "0" },
+        { "id": 2, "sourceVertexId": 0, "targetVertexId": 3, "type": "0" },
+        { "id": 3, "sourceVertexId": 0, "targetVertexId": 4, "type": "0" },
+        { "id": 4, "sourceVertexId": 0, "targetVertexId": 5, "type": "0" },
+        { "id": 5, "sourceVertexId": 0, "targetVertexId": 6, "type": "0" }
+    ]
+}
