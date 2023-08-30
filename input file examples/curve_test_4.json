@@ -70,6 +70,10 @@
         { "id": 25, "sourceVertexId": 0, "targetVertexId": 26, "type": "0" }
     ],
 
-    "warnings": ["Тест предупреждение", "111_warning"],
+    "warnings": [
+        "Тест предупреждение",
+        "111_warning",
+        "Vertex with current coords = [xx, yy, zz] will be ignored, since it exceed defined range of arguments"
+    ],
     "errors": ["Тест ошибка", "222_error"]
 }

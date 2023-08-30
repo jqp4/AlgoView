@@ -185,15 +185,15 @@ class AlgoViewСonfiguration {
 
         const changeCharacteristicsBlock = function () {
             if (thisContextTrans.params.showGraphInfo) {
-                Controller.changeCharacteristicsBlock(graphInfo);
+                InfoBlockController.changeCharacteristicsBlock(graphInfo);
             } else {
-                Controller.changeCharacteristicsBlock(null);
+                InfoBlockController.changeCharacteristicsBlock(null);
             }
         };
 
         const changeInfoBlock = function () {
             if (thisContextTrans.params.showSystemLoadInfo == false) {
-                Controller.changeInfoBlock("", "");
+                InfoBlockController.changeFPSInfoBlock("", "");
             }
         };
 
@@ -540,31 +540,31 @@ class GraphicObjects {
 
         if (n1.x != 0 && n1.y == 0 && n1.z == 0) {
             // ось OX
-            console.log("ось OX");
+            // console.log("ось OX");
             n2.set(0, -1, -1).normalize();
         } else if (n1.x == 0 && n1.y != 0 && n1.z == 0) {
             // ось OY
-            console.log("ось OY");
+            // console.log("ось OY");
             n2.set(-1, 0, -1).normalize();
         } else if (n1.x == 0 && n1.y == 0 && n1.z != 0) {
             // ось OZ
-            console.log("ось OZ");
+            // console.log("ось OZ");
             n2.set(-1, -1, 0).normalize();
         } else if (n1.x != 0 && n1.y != 0 && n1.z == 0) {
             // плоскость OXY
-            console.log("плоскость OXY");
+            // console.log("плоскость OXY");
             n2.set(0, 0, -1);
         } else if (n1.x == 0 && n1.y != 0 && n1.z != 0) {
             // плоскость OYZ
-            console.log("плоскость OYZ");
+            // console.log("плоскость OYZ");
             n2.set(-1, 0, 0);
         } else if (n1.x != 0 && n1.y == 0 && n1.z != 0) {
             // плоскость OXZ
-            console.log("плоскость OXZ");
+            // console.log("плоскость OXZ");
             n2.set(0, -1, 0);
         } else {
             // Общий случай
-            console.log("Общий случай");
+            // console.log("Общий случай");
 
             const n1x = Math.abs(n1.x);
             const n1y = Math.abs(n1.y);
@@ -577,9 +577,9 @@ class GraphicObjects {
             const n2x = b * Math.cos(gamma) * Math.sign(n1.x);
             const n2z = b * Math.sin(gamma) * Math.sign(n1.z);
 
-            console.log("beta =", (beta * 180) / Math.PI);
-            console.log("b =", b);
-            console.log("gamma =", (gamma * 180) / Math.PI);
+            // console.log("beta =", (beta * 180) / Math.PI);
+            // console.log("b =", b);
+            // console.log("gamma =", (gamma * 180) / Math.PI);
 
             n2.set(-n2x, n1.y, -n2z).normalize();
         }
@@ -587,10 +587,10 @@ class GraphicObjects {
         // рассчитываем третий базисный вектор n3
         n3.copy(cross(n1, n2));
 
-        console.log("n1:", n1.x, n1.y, n1.z);
-        console.log("n2:", n2.x, n2.y, n2.z);
-        console.log("n3:", n3.x, n3.y, n3.z);
-        console.log("\n");
+        // console.log("n1:", n1.x, n1.y, n1.z);
+        // console.log("n2:", n2.x, n2.y, n2.z);
+        // console.log("n3:", n3.x, n3.y, n3.z);
+        // console.log("\n");
 
         const M = [
             [n1.x, n2.x, n3.x],
@@ -1048,7 +1048,10 @@ class Controller {
     autoRotateGraph() {
         config.rotateGraphByClock();
     }
+}
 
+/** Контроллер полей с информацией о графе и ошибках в работе */
+class InfoBlockController {
     static changeCharacteristicsBlock(graphInfo) {
         let content = "";
 
@@ -1064,20 +1067,21 @@ class Controller {
             text += "• width: " + info.width + "<br>";
 
             if (warnings.length != 0) {
-                text += "<br><b><i>Warnings:</i></b><br>";
+                text +=
+                    "<br><b><i>Warnings (" + warnings.length + "):</i></b><br>";
 
                 for (let i = 0; i < warnings.length; i++) {
                     const num = i + 1;
-                    text += num + ": " + warnings[i] + "<br>";
+                    text += "<b>" + num + ":</b> " + warnings[i] + "<br>";
                 }
             }
 
             if (errors.length != 0) {
-                text += "<br><b><i>Errors:</i></b><br>";
+                text += "<br><b><i>Errors (" + errors.length + "):</i></b><br>";
 
                 for (let i = 0; i < errors.length; i++) {
                     const num = i + 1;
-                    text += num + ": " + errors[i] + "<br>";
+                    text += "<b>" + num + ":</b> " + errors[i] + "<br>";
                 }
             }
 
@@ -1087,7 +1091,7 @@ class Controller {
         document.getElementById("textInfoBlock_0").innerHTML = content;
     }
 
-    static changeInfoBlock(text1, text2) {
+    static changeFPSInfoBlock(text1, text2) {
         const content1 = "<h4>" + text1 + "</h4>";
         const content2 = "<h4>" + text2 + "</h4>";
 
@@ -1106,7 +1110,8 @@ class AppManager {
                 target[key] = value;
 
                 if (value == "done") {
-                    config.setupGUI();
+                    // config.setupGUI();
+                    console.log("AppManager.statusProxy updated");
                 }
 
                 return true;
@@ -1132,14 +1137,15 @@ class App {
         this.controller = new Controller(this.appManager, this.view);
 
         config.setControllerContext(this.controller);
-        // this.appManager.setDoneBuildStatus();
-        // this.appManager.buildStatus = "done";
-
         config.setupGUI(this.model.graphInfo);
 
         if (config.params.showGraphInfo) {
-            Controller.changeCharacteristicsBlock(this.model.graphInfo);
+            InfoBlockController.changeCharacteristicsBlock(
+                this.model.graphInfo
+            );
         }
+
+        this.appManager.setDoneBuildStatus();
     }
 }
 
@@ -1257,7 +1263,7 @@ async function renderLoop() {
     fpsManager.addFpsValue(fps);
     fpsManager.addRenderTimeValue(renderTime);
     if (config.params.showSystemLoadInfo) {
-        Controller.changeInfoBlock(
+        InfoBlockController.changeFPSInfoBlock(
             fpsManager.getFpsInfoStr(),
             fpsManager.getRenderTimeInfoStr()
         );
@@ -1268,5 +1274,3 @@ async function renderLoop() {
 const app = new App();
 
 renderLoop();
-
-// future https://github.com/birkir/react-three-gui

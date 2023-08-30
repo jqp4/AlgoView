@@ -43,17 +43,18 @@ h1 {
     position: absolute;
     left: 20px;
     top: 84px;
+    width: 400px;
 }
 
 #textInfoBlock_1 {
     position: absolute;
-    left: 20px;
+    right: 20px;
     bottom: 42px;
 }
 
 #textInfoBlock_2 {
     position: absolute;
-    left: 20px;
+    right: 20px;
     bottom: 20px;
 }
 
