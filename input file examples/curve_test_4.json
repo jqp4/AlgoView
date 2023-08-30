@@ -1,0 +1,75 @@
+{
+    "characteristics": {
+        "vertex_num": 7,
+        "edge_num": 6,
+        "critical_length": 3,
+        "width": 4
+    },
+
+    "vertices": [
+        { "id": 0, "coordinates": [1, 1, 1], "type": "0" },
+
+        { "id": 1, "coordinates": [1, 3, 1], "type": "1" },
+        { "id": 2, "coordinates": [1, 1, 3], "type": "1" },
+        { "id": 3, "coordinates": [1, 0, 1], "type": "1" },
+        { "id": 4, "coordinates": [1, 1, 0], "type": "1" },
+        { "id": 5, "coordinates": [3, 1, 1], "type": "1" },
+        { "id": 6, "coordinates": [0, 1, 1], "type": "1" },
+
+        { "id": 7, "coordinates": [3, 3, 1], "type": "1" },
+        { "id": 8, "coordinates": [1, 3, 3], "type": "1" },
+        { "id": 9, "coordinates": [3, 1, 3], "type": "1" },
+
+        { "id": 10, "coordinates": [0, 0, 1], "type": "1" },
+        { "id": 11, "coordinates": [1, 0, 0], "type": "1" },
+        { "id": 12, "coordinates": [0, 1, 0], "type": "1" },
+
+        { "id": 13, "coordinates": [3, 0, 1], "type": "1" },
+        { "id": 14, "coordinates": [1, 3, 0], "type": "1" },
+        { "id": 15, "coordinates": [3, 1, 0], "type": "1" },
+
+        { "id": 16, "coordinates": [0, 3, 1], "type": "1" },
+        { "id": 17, "coordinates": [1, 0, 3], "type": "1" },
+        { "id": 18, "coordinates": [0, 1, 3], "type": "1" },
+
+        { "id": 19, "coordinates": [3, 3, 3], "type": "1" },
+        { "id": 20, "coordinates": [0, 3, 3], "type": "1" },
+        { "id": 21, "coordinates": [3, 0, 3], "type": "1" },
+        { "id": 22, "coordinates": [3, 3, 0], "type": "1" },
+        { "id": 23, "coordinates": [0, 0, 3], "type": "1" },
+        { "id": 24, "coordinates": [3, 0, 0], "type": "1" },
+        { "id": 25, "coordinates": [0, 3, 0], "type": "1" },
+        { "id": 26, "coordinates": [0, 0, 0], "type": "1" }
+    ],
+    "edges": [
+        { "id": 0, "sourceVertexId": 0, "targetVertexId": 1, "type": "0" },
+        { "id": 1, "sourceVertexId": 0, "targetVertexId": 2, "type": "0" },
+        { "id": 2, "sourceVertexId": 0, "targetVertexId": 3, "type": "0" },
+        { "id": 3, "sourceVertexId": 0, "targetVertexId": 4, "type": "0" },
+        { "id": 4, "sourceVertexId": 0, "targetVertexId": 5, "type": "0" },
+        { "id": 5, "sourceVertexId": 0, "targetVertexId": 6, "type": "0" },
+        { "id": 6, "sourceVertexId": 0, "targetVertexId": 7, "type": "0" },
+        { "id": 7, "sourceVertexId": 0, "targetVertexId": 8, "type": "0" },
+        { "id": 8, "sourceVertexId": 0, "targetVertexId": 9, "type": "0" },
+        { "id": 9, "sourceVertexId": 0, "targetVertexId": 10, "type": "0" },
+        { "id": 10, "sourceVertexId": 0, "targetVertexId": 11, "type": "0" },
+        { "id": 11, "sourceVertexId": 0, "targetVertexId": 12, "type": "0" },
+        { "id": 12, "sourceVertexId": 0, "targetVertexId": 13, "type": "0" },
+        { "id": 13, "sourceVertexId": 0, "targetVertexId": 14, "type": "0" },
+        { "id": 14, "sourceVertexId": 0, "targetVertexId": 15, "type": "0" },
+        { "id": 15, "sourceVertexId": 0, "targetVertexId": 16, "type": "0" },
+        { "id": 16, "sourceVertexId": 0, "targetVertexId": 17, "type": "0" },
+        { "id": 17, "sourceVertexId": 0, "targetVertexId": 18, "type": "0" },
+        { "id": 18, "sourceVertexId": 0, "targetVertexId": 19, "type": "0" },
+        { "id": 19, "sourceVertexId": 0, "targetVertexId": 20, "type": "0" },
+        { "id": 20, "sourceVertexId": 0, "targetVertexId": 21, "type": "0" },
+        { "id": 21, "sourceVertexId": 0, "targetVertexId": 22, "type": "0" },
+        { "id": 22, "sourceVertexId": 0, "targetVertexId": 23, "type": "0" },
+        { "id": 23, "sourceVertexId": 0, "targetVertexId": 24, "type": "0" },
+        { "id": 24, "sourceVertexId": 0, "targetVertexId": 25, "type": "0" },
+        { "id": 25, "sourceVertexId": 0, "targetVertexId": 26, "type": "0" }
+    ],
+
+    "warnings": ["Тест предупреждение", "111_warning"],
+    "errors": ["Тест ошибка", "222_error"]
+}

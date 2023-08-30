@@ -39,6 +39,12 @@ h1 {
     top: 20px;
 }
 
+#textInfoBlock_0 {
+    position: absolute;
+    left: 20px;
+    top: 84px;
+}
+
 #textInfoBlock_1 {
     position: absolute;
     left: 20px;

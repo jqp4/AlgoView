@@ -15,7 +15,8 @@ class Params {
     constructor() {
         this.pause = false;
         this.autoRotate = false;
-        this.showSystemLoadInformation = true;
+        this.showSystemLoadInfo = true;
+        this.showGraphInfo = true;
 
         this.fpsRate = 30;
         this.lineWidth = 4;
@@ -159,7 +160,7 @@ class AlgoViewСonfiguration {
     }
 
     /** Настройка GUI */
-    setupGUI() {
+    setupGUI(graphInfo) {
         // https://stackoverflow.com/questions/38762124/how-to-add-folders-in-dat-gui
 
         this.gui = new dat.GUI();
@@ -182,9 +183,19 @@ class AlgoViewСonfiguration {
             controllerContextTrans.setNewCamera();
         };
 
-        // const setXYView = function () {
-        //     thisContextTrans.setXYView();
-        // };
+        const changeCharacteristicsBlock = function () {
+            if (thisContextTrans.params.showGraphInfo) {
+                Controller.changeCharacteristicsBlock(graphInfo);
+            } else {
+                Controller.changeCharacteristicsBlock(null);
+            }
+        };
+
+        const changeInfoBlock = function () {
+            if (thisContextTrans.params.showSystemLoadInfo == false) {
+                Controller.changeInfoBlock("", "");
+            }
+        };
 
         /**     ================
          *        View Settins
@@ -199,11 +210,14 @@ class AlgoViewСonfiguration {
             .onChange(rebuildSceneCallback);
 
         folderViewSettins
-            .add(this.params, "showSystemLoadInformation")
+            .add(this.params, "showSystemLoadInfo")
             .name("Show load info")
-            .onChange(function () {
-                changeInfoBlock("", "");
-            });
+            .onChange(changeInfoBlock);
+
+        folderViewSettins
+            .add(this.params, "showGraphInfo")
+            .name("Show graph info")
+            .onChange(changeCharacteristicsBlock);
 
         /**     ===================
          *        Camera Controls
@@ -384,6 +398,55 @@ class Graph {
         });
 
         return sizeVector3;
+    }
+}
+
+/** Модель с данными о графе, предупреждениями и ошибками*/
+class GraphInfo {
+    characteristics = new Object();
+    warnings = new Array();
+    errors = new Array();
+
+    /** Маркер наличия проблем */
+    thereAreErrorsOrWarnings = false;
+
+    constructor(graphData) {
+        this.graphData = graphData;
+
+        this.fillInCharacteristics();
+        this.fillInWarnings();
+        this.fillInErrors();
+
+        if (this.warnings.length != 0 || this.errors.length != 0) {
+            this.thereAreErrorsOrWarnings = true;
+        }
+    }
+
+    fillInCharacteristics() {
+        // characteristics:
+        //      vertex_num
+        //      edge_num
+        //      critical_length
+        //      width
+
+        for (const property in this.graphData.characteristics) {
+            this.characteristics[property] =
+                this.graphData.characteristics[property];
+        }
+    }
+
+    fillInWarnings() {
+        for (let i = 0; i < this.graphData.warnings.length; i++) {
+            const warningStr = this.graphData.warnings[i];
+            this.warnings.push(warningStr);
+        }
+    }
+
+    fillInErrors() {
+        for (let i = 0; i < this.graphData.errors.length; i++) {
+            const errorStr = this.graphData.errors[i];
+            this.errors.push(errorStr);
+        }
     }
 }
 
@@ -813,6 +876,7 @@ class Model {
         this.graphData = dataLoader.loadGraphData();
 
         this.graph = new Graph(this.graphData);
+        this.graphInfo = new GraphInfo(this.graphData);
     }
 }
 
@@ -984,6 +1048,52 @@ class Controller {
     autoRotateGraph() {
         config.rotateGraphByClock();
     }
+
+    static changeCharacteristicsBlock(graphInfo) {
+        let content = "";
+
+        if (graphInfo != null) {
+            const info = graphInfo.characteristics;
+            const warnings = graphInfo.warnings;
+            const errors = graphInfo.errors;
+
+            let text = "<b><i>Graph characteristics:</i></b><br>";
+            text += "• vertex num: " + info.vertex_num + "<br>";
+            text += "• edge num: " + info.edge_num + "<br>";
+            text += "• critical length: " + info.critical_length + "<br>";
+            text += "• width: " + info.width + "<br>";
+
+            if (warnings.length != 0) {
+                text += "<br><b><i>Warnings:</i></b><br>";
+
+                for (let i = 0; i < warnings.length; i++) {
+                    const num = i + 1;
+                    text += num + ": " + warnings[i] + "<br>";
+                }
+            }
+
+            if (errors.length != 0) {
+                text += "<br><b><i>Errors:</i></b><br>";
+
+                for (let i = 0; i < errors.length; i++) {
+                    const num = i + 1;
+                    text += num + ": " + errors[i] + "<br>";
+                }
+            }
+
+            content = text; //"<h4>" + text + "</h4>";
+        }
+
+        document.getElementById("textInfoBlock_0").innerHTML = content;
+    }
+
+    static changeInfoBlock(text1, text2) {
+        const content1 = "<h4>" + text1 + "</h4>";
+        const content2 = "<h4>" + text2 + "</h4>";
+
+        document.getElementById("textInfoBlock_1").innerHTML = content1;
+        document.getElementById("textInfoBlock_2").innerHTML = content2;
+    }
 }
 
 class AppManager {
@@ -1023,17 +1133,14 @@ class App {
 
         config.setControllerContext(this.controller);
         // this.appManager.setDoneBuildStatus();
-        this.appManager.buildStatus = "done";
-        config.setupGUI();
+        // this.appManager.buildStatus = "done";
+
+        config.setupGUI(this.model.graphInfo);
+
+        if (config.params.showGraphInfo) {
+            Controller.changeCharacteristicsBlock(this.model.graphInfo);
+        }
     }
-}
-
-function changeInfoBlock(text1, text2) {
-    const content1 = "<h4>" + text1 + "</h4>";
-    const content2 = "<h4>" + text2 + "</h4>";
-
-    document.getElementById("textInfoBlock_1").innerHTML = content1;
-    document.getElementById("textInfoBlock_2").innerHTML = content2;
 }
 
 function sleep(ms) {
@@ -1149,8 +1256,8 @@ async function renderLoop() {
 
     fpsManager.addFpsValue(fps);
     fpsManager.addRenderTimeValue(renderTime);
-    if (config.params.showSystemLoadInformation) {
-        changeInfoBlock(
+    if (config.params.showSystemLoadInfo) {
+        Controller.changeInfoBlock(
             fpsManager.getFpsInfoStr(),
             fpsManager.getRenderTimeInfoStr()
         );
