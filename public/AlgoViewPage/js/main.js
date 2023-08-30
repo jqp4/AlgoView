@@ -179,6 +179,11 @@ class AlgoViewСonfiguration {
         const thisContextTrans = this;
         const controllerContextTrans = this.controllerContext;
 
+        /**     ================
+         *           Funcs
+         *      ================
+         */
+
         const rebuildSceneCallback = function () {
             controllerContextTrans.rebuildScene();
         };
@@ -220,13 +225,24 @@ class AlgoViewСonfiguration {
         };
 
         const levelControllerObj = { levelInc: levelInc, levelDec: levelDec };
+        let prevLevelValue;
 
-        const roundLevelValue = function () {
-            if (thisContextTrans.params.level % 1 == 0) return;
+        const updateLevelValue = function () {
+            const floatLevelValue = thisContextTrans.params.level;
+            // console.log("typeof floatLevelValue = ", typeof floatLevelValue);
 
-            thisContextTrans.params.level = Math.round(
-                thisContextTrans.params.level
-            );
+            if (floatLevelValue < 0 || typeof floatLevelValue != "number") {
+                thisContextTrans.params.level = 0;
+            } else if (floatLevelValue > maxLevel) {
+                thisContextTrans.params.level = maxLevel;
+            } else if (floatLevelValue % 1 != 0) {
+                thisContextTrans.params.level = Math.round(floatLevelValue);
+            }
+
+            if (thisContextTrans.params.level != prevLevelValue) {
+                prevLevelValue = thisContextTrans.params.level;
+                rebuildSceneCallback();
+            }
         };
 
         /**     ================
@@ -299,7 +315,7 @@ class AlgoViewСonfiguration {
         const levelCounter = folderLevelControls
             .add(this.params, "level", 0, maxLevel)
             .name("Level")
-            .onChange(roundLevelValue);
+            .onChange(updateLevelValue);
 
         folderLevelControls.add(levelControllerObj, "levelInc").name("Level +");
         folderLevelControls.add(levelControllerObj, "levelDec").name("Level -");
@@ -353,11 +369,13 @@ class Vertex {
      * @param {number} y
      * @param {number} z
      * @param {string} type
+     * @param {number} level
      */
-    constructor(id, x, y, z, type) {
+    constructor(id, x, y, z, type, level) {
         this.id = id;
         this.pos = new THREE.Vector3(x, y, z);
         this.type = type;
+        this.level = level;
     }
 }
 
@@ -416,7 +434,8 @@ class Graph {
                 this.coordinateTransform(element.coordinates[0]),
                 this.coordinateTransform(element.coordinates[1]),
                 this.coordinateTransform(element.coordinates[2]),
-                element.type
+                element.type,
+                element.level
             );
 
             this.vertices.set(element.id, vertex);
@@ -849,7 +868,7 @@ class GraphicObjects {
     }
 
     /** Создает сферу по заданным координатам */
-    static createSphere(x, y, z, colorIndex = 1, sphereRadius = 2) {
+    static createSphere(x, y, z, sphereRadius = 2, colorIndex = 1) {
         // const sphereRadius = 2;
         const sphereWidthDivisions = 16;
         const sphereHeightDivisions = 16;
@@ -1009,10 +1028,14 @@ class View {
      * @param {Vertex} vetrex - вершина, экземпляр класса `Vertex`.
      */
     buildVertexObject(vetrex) {
-        // 0 - входная/выходная вершина, октаэдр
+        // 0 - октаэдр (входная/выходная вершина)
         // 1 - маленький шар
         // 2 - большой шар
         // 3 - хз пока что
+
+        // 1 - yellow
+        // 2 - blue
+        const color = vetrex.level == config.params.level ? 2 : 1;
 
         switch (vetrex.type) {
             case "0": {
@@ -1020,7 +1043,7 @@ class View {
                     vetrex.pos.x,
                     vetrex.pos.y,
                     vetrex.pos.z,
-                    2
+                    color
                 );
                 break;
             }
@@ -1029,8 +1052,9 @@ class View {
                     vetrex.pos.x,
                     vetrex.pos.y,
                     vetrex.pos.z,
-                    1,
-                    1.3
+
+                    1.3,
+                    color
                 );
                 break;
             }
@@ -1040,8 +1064,9 @@ class View {
                     vetrex.pos.x,
                     vetrex.pos.y,
                     vetrex.pos.z,
-                    1,
-                    1.8
+
+                    1.8,
+                    color
                 );
                 break;
             }
@@ -1050,7 +1075,7 @@ class View {
                     vetrex.pos.x,
                     vetrex.pos.y,
                     vetrex.pos.z,
-                    1
+                    color
                 );
                 break;
             }
