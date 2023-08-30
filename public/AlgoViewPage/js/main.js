@@ -18,6 +18,10 @@ class Params {
         this.showSystemLoadInfo = true;
         this.showGraphInfo = true;
 
+        /** уровень ярусно параллельная формы */
+        this.level = 0;
+        this.showLevel = true;
+
         this.fpsRate = 30;
         this.lineWidth = 4;
         this.cameraType = CameraTypes.perspective;
@@ -167,10 +171,10 @@ class AlgoViewСonfiguration {
         const folderViewSettins = this.gui.addFolder("View Settins");
         const folderCameraControls = this.gui.addFolder("Camera Controls");
         const folderSceneControls = this.gui.addFolder("Scene Controls");
+        const folderLevelControls = this.gui.addFolder("Tiered-Parallel Form");
 
-        // folderViewSettins.open();
         folderCameraControls.open();
-        // folderSceneControls.open();
+        folderLevelControls.open();
 
         const thisContextTrans = this;
         const controllerContextTrans = this.controllerContext;
@@ -195,6 +199,34 @@ class AlgoViewСonfiguration {
             if (thisContextTrans.params.showSystemLoadInfo == false) {
                 InfoBlockController.changeFPSInfoBlock("", "");
             }
+        };
+
+        const maxLevel = graphInfo.characteristics.critical_length;
+
+        const levelInc = function () {
+            if (thisContextTrans.params.level < maxLevel) {
+                thisContextTrans.params.level += 1;
+            }
+
+            levelCounter.setValue(thisContextTrans.params.level);
+        };
+
+        const levelDec = function () {
+            if (thisContextTrans.params.level > 0) {
+                thisContextTrans.params.level -= 1;
+            }
+
+            levelCounter.setValue(thisContextTrans.params.level);
+        };
+
+        const levelControllerObj = { levelInc: levelInc, levelDec: levelDec };
+
+        const roundLevelValue = function () {
+            if (thisContextTrans.params.level % 1 == 0) return;
+
+            thisContextTrans.params.level = Math.round(
+                thisContextTrans.params.level
+            );
         };
 
         /**     ================
@@ -253,6 +285,24 @@ class AlgoViewСonfiguration {
         folderSceneControls
             .add(this.controllerContext, "rebuildScene")
             .name("Rebuild"); // .onChange(rebuildSceneCallback);
+
+        /**     ==================
+         *     Tiered-Parallel Form
+         *      ==================
+         */
+
+        folderLevelControls
+            .add(this.params, "showLevel")
+            .name("Show Level")
+            .onChange(function () {});
+
+        const levelCounter = folderLevelControls
+            .add(this.params, "level", 0, maxLevel)
+            .name("Level")
+            .onChange(roundLevelValue);
+
+        folderLevelControls.add(levelControllerObj, "levelInc").name("Level +");
+        folderLevelControls.add(levelControllerObj, "levelDec").name("Level -");
     }
 
     /** Обработка изменения размера экрана */
