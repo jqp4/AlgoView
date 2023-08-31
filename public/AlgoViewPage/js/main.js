@@ -50,7 +50,7 @@ class AlgoViewСonfiguration {
         this.scene = new THREE.Scene();
 
         this.camera = this.createCamera();
-        this.camera.position.set(100, 40, 20);
+        this.camera.position.set(90, 30, 90);
         this.frustumSize = 1000;
 
         this.renderer = new THREE.WebGLRenderer({
