@@ -425,19 +425,39 @@ class Graph {
      * @param {number} value
      * @returns преобразованное значение
      */
-    coordinateTransform(value) {
-        return this.#axisShift + value * this.#scale;
+    coordinateTransform(value, isVertexShifted = false) {
+        return (
+            this.#axisShift +
+            (isVertexShifted ? value + 0.5 : value) * this.#scale
+        );
     }
 
     createVertices() {
         for (let i = 0; i < this.graphData.vertices.length; i++) {
             const element = this.graphData.vertices[i];
 
+            // const isVertexShifted = this.checkVertexForRequiredShift(
+            //     element.coordinates[0],
+            //     element.coordinates[1],
+            //     element.coordinates[2]
+            // );
+
+            const isVertexShifted = false; // element.level == 0;
+
             const vertex = new Vertex(
                 element.id,
-                this.coordinateTransform(element.coordinates[0]),
-                this.coordinateTransform(element.coordinates[1]),
-                this.coordinateTransform(element.coordinates[2]),
+                this.coordinateTransform(
+                    element.coordinates[0],
+                    isVertexShifted
+                ),
+                this.coordinateTransform(
+                    element.coordinates[1],
+                    isVertexShifted
+                ),
+                this.coordinateTransform(
+                    element.coordinates[2],
+                    isVertexShifted
+                ),
                 element.type,
                 element.level
             );
@@ -445,6 +465,27 @@ class Graph {
             this.vertices.set(element.id, vertex);
         }
     }
+
+    /**
+     * Проверка на необходимость сдвига вершины
+     * @param {number} x
+     * @param {number} y
+     * @param {number} z
+     */
+    // checkVertexForRequiredShift(x, y, z) {
+    //     let answer = false;
+
+    //     this.vertices.forEach(function (vertex, id, map) {
+    //         if (answer == true) return;
+    //         console.log(vertex.pos.x, x);
+
+    //         if (vertex.pos.x == x && vertex.pos.y == y && vertex.pos.z == z) {
+    //             answer = true;
+    //         }
+    //     });
+
+    //     return answer;
+    // }
 
     createEdges() {
         for (let i = 0; i < this.graphData.edges.length; i++) {
@@ -520,12 +561,12 @@ class Graph {
         if (ky <= 0 || ky >= 1) return false;
         if (kz <= 0 || kz >= 1) return false;
 
-        console.log("edge: ", sourceVertex.id, targetVertex.id);
-        console.log("verifiableVertex: ", verifiableVertex.id);
-        console.log("kx = ", kx);
-        console.log("ky = ", ky);
-        console.log("kz = ", kz);
-        console.log("");
+        // console.log("edge: ", sourceVertex.id, targetVertex.id);
+        // console.log("verifiableVertex: ", verifiableVertex.id);
+        // console.log("kx = ", kx);
+        // console.log("ky = ", ky);
+        // console.log("kz = ", kz);
+        // console.log("");
 
         const isEqual = function (a, b) {
             return isNaN(a) || isNaN(b) || a - b < 1e-4;
@@ -981,17 +1022,26 @@ class GraphicObjects {
 
     /** Создает октаэдр по заданным координатам */
     static createOctahedron(x, y, z, colorIndex) {
-        // https://threejs.org/docs/#api/en/geometries/OctahedronGeometry
+        // https://stackoverflow.com/questions/7919516/using-textures-in-three-js
 
-        const octahedronRadius = 1.8;
-        const octahedronGeo = new THREE.OctahedronGeometry(octahedronRadius);
-        const octahedronMat = new THREE.MeshPhongMaterial({
-            color: colors[colorIndex],
+        const loader = new THREE.TextureLoader();
+        loader.load("./textures/glass_texture_5.jpeg", function (texture) {
+            // https://threejs.org/docs/#api/en/geometries/OctahedronGeometry
+
+            const octahedronRadius = 1.8;
+            const octahedronGeo = new THREE.OctahedronGeometry(
+                octahedronRadius
+            );
+
+            const octahedronMat = new THREE.MeshPhongMaterial({
+                map: texture,
+                color: colors[colorIndex],
+            });
+
+            const mesh = new THREE.Mesh(octahedronGeo, octahedronMat);
+            mesh.position.set(x, y, z);
+            config.graph.add(mesh);
         });
-
-        const mesh = new THREE.Mesh(octahedronGeo, octahedronMat);
-        mesh.position.set(x, y, z);
-        config.graph.add(mesh);
     }
 }
 
@@ -1102,10 +1152,10 @@ class View {
 
     /**
      * Построение 3D объекта вершины на сцене.
-     * @param {Vertex} vetrex - вершина, экземпляр класса `Vertex`.
+     * @param {Vertex} vertex - вершина, экземпляр класса `Vertex`.
      */
-    buildVertexObject(vetrex) {
-        // 0 - октаэдр (входная/выходная вершина)
+    buildVertexObject(vertex) {
+        // [old] 0 - октаэдр (входная/выходная вершина)
         // 1 - маленький шар
         // 2 - большой шар
         // 3 - хз пока что
@@ -1113,25 +1163,27 @@ class View {
         // 1 - yellow
         // 2 - blue
         const color =
-            config.params.showLevel && vetrex.level == config.params.level
+            config.params.showLevel && vertex.level == config.params.level
                 ? 2
                 : 1;
 
-        switch (vetrex.type) {
-            case "0": {
-                GraphicObjects.createOctahedron(
-                    vetrex.pos.x,
-                    vetrex.pos.y,
-                    vetrex.pos.z,
-                    color
-                );
-                break;
-            }
+        if (vertex.level == 0) {
+            GraphicObjects.createOctahedron(
+                vertex.pos.x,
+                vertex.pos.y,
+                vertex.pos.z,
+                color
+            );
+
+            return;
+        }
+
+        switch (vertex.type) {
             case "1": {
                 GraphicObjects.createSphere(
-                    vetrex.pos.x,
-                    vetrex.pos.y,
-                    vetrex.pos.z,
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
 
                     1.3,
                     color
@@ -1141,9 +1193,9 @@ class View {
 
             case "2": {
                 GraphicObjects.createSphere(
-                    vetrex.pos.x,
-                    vetrex.pos.y,
-                    vetrex.pos.z,
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
 
                     1.8,
                     color
@@ -1152,9 +1204,9 @@ class View {
             }
             default: {
                 GraphicObjects.createCube(
-                    vetrex.pos.x,
-                    vetrex.pos.y,
-                    vetrex.pos.z,
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
                     color
                 );
                 break;
