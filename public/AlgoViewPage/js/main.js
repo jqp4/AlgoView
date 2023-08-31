@@ -310,7 +310,7 @@ class AlgoViewСonfiguration {
         folderLevelControls
             .add(this.params, "showLevel")
             .name("Show Level")
-            .onChange(function () {});
+            .onChange(rebuildSceneCallback);
 
         const levelCounter = folderLevelControls
             .add(this.params, "level", 0, maxLevel)
@@ -387,12 +387,16 @@ class Edge {
      * @param {Vertex} sourceVertex
      * @param {Vertex} targetVertex
      * @param {string} type
+     * @param {number} level
+     * @param {boolean} requiresBending
      */
-    constructor(id, sourceVertex, targetVertex, type) {
+    constructor(id, sourceVertex, targetVertex, type, level, requiresBending) {
         this.id = id;
         this.sourceVertex = sourceVertex;
         this.targetVertex = targetVertex;
         this.type = type;
+        this.level = level;
+        this.requiresBending = requiresBending;
     }
 }
 
@@ -446,15 +450,88 @@ class Graph {
         for (let i = 0; i < this.graphData.edges.length; i++) {
             const element = this.graphData.edges[i];
 
+            const sourceVertex = this.vertices.get(element.sourceVertexId);
+            const targetVertex = this.vertices.get(element.targetVertexId);
+
+            const requiresBending = this.checkEdgeForRequiredBending(
+                sourceVertex,
+                targetVertex
+            );
+
             const edge = new Edge(
                 element.id,
-                this.vertices.get(element.sourceVertexId),
-                this.vertices.get(element.targetVertexId),
-                element.type
+                sourceVertex,
+                targetVertex,
+                element.type,
+                element.level,
+                requiresBending
             );
 
             this.edges.set(element.id, edge);
         }
+    }
+
+    /**
+     * Проверка на необходимость изгиба дуги
+     * @param {Vertex} sourceVertex начало дуги
+     * @param {Vertex} targetVertex конец дуги
+     */
+    checkEdgeForRequiredBending(sourceVertex, targetVertex) {
+        let answer = false;
+        const context = this;
+
+        this.vertices.forEach(function (verifiableVertex, id, map) {
+            if (answer == true) return;
+
+            const isVertexCrossed = context.checkVertexIntersection(
+                sourceVertex,
+                targetVertex,
+                verifiableVertex
+            );
+
+            if (isVertexCrossed) answer = true;
+        });
+
+        return answer;
+    }
+
+    /**
+     * Проверка пересечения дуги и проверяемой точки
+     * @param {Vertex} sourceVertex начало дуги
+     * @param {Vertex} targetVertex конец дуги
+     * @param {Vertex} verifiableVertex проверяемая точка
+     */
+    checkVertexIntersection(sourceVertex, targetVertex, verifiableVertex) {
+        // Проверка через линейную зависимость координат
+
+        let kx =
+            (verifiableVertex.pos.x - sourceVertex.pos.x) /
+            (targetVertex.pos.x - sourceVertex.pos.x);
+
+        let ky =
+            (verifiableVertex.pos.y - sourceVertex.pos.y) /
+            (targetVertex.pos.y - sourceVertex.pos.y);
+
+        let kz =
+            (verifiableVertex.pos.z - sourceVertex.pos.z) /
+            (targetVertex.pos.z - sourceVertex.pos.z);
+
+        if (kx <= 0 || kx >= 1) return false;
+        if (ky <= 0 || ky >= 1) return false;
+        if (kz <= 0 || kz >= 1) return false;
+
+        console.log("edge: ", sourceVertex.id, targetVertex.id);
+        console.log("verifiableVertex: ", verifiableVertex.id);
+        console.log("kx = ", kx);
+        console.log("ky = ", ky);
+        console.log("kz = ", kz);
+        console.log("");
+
+        const isEqual = function (a, b) {
+            return isNaN(a) || isNaN(b) || a - b < 1e-4;
+        };
+
+        return isEqual(kx, ky) && isEqual(ky, kz);
     }
 
     getSize() {
@@ -685,7 +762,7 @@ class GraphicObjects {
         const len = sourceVector3.distanceTo(targetVector3);
 
         /** радиус окружности */
-        const r = len * 1.1;
+        const r = len * 0.85;
 
         /** координаты центра окружности */
         const x0 = len / 2;
@@ -1035,7 +1112,10 @@ class View {
 
         // 1 - yellow
         // 2 - blue
-        const color = vetrex.level == config.params.level ? 2 : 1;
+        const color =
+            config.params.showLevel && vetrex.level == config.params.level
+                ? 2
+                : 1;
 
         switch (vetrex.type) {
             case "0": {
@@ -1087,12 +1167,27 @@ class View {
      * @param {Edge} edge - ребро, экземпляр класса `Edge`.
      */
     buildEdgeObject(edge) {
-        // !!!
-        GraphicObjects.createCurvedArrow(
-            edge.sourceVertex.pos,
-            edge.targetVertex.pos,
-            6
-        );
+        // 1 - yellow
+        // 2 - blue
+        // 6 - red
+        const color =
+            config.params.showLevel && edge.level == config.params.level
+                ? 2
+                : 6;
+
+        if (edge.requiresBending) {
+            GraphicObjects.createCurvedArrow(
+                edge.sourceVertex.pos,
+                edge.targetVertex.pos,
+                color
+            );
+        } else {
+            GraphicObjects.createStraightArrow(
+                edge.sourceVertex.pos,
+                edge.targetVertex.pos,
+                color
+            );
+        }
     }
 }
 
