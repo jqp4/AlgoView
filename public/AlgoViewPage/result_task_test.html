@@ -1,0 +1,22 @@
+<h1>Просмотр результата</h1>
+
+<!-- Добавим сюда iFrame, отображающий визуализацию графа -->
+<div id="refresh">
+    <button
+        onclick="document.getElementById('frameId').src = document.getElementById('frameId').src;"
+    >
+        Reset
+    </button>
+</div>
+
+<!-- /* top | right | bottom | left */ -->
+<div style="padding: 8 6 0 0">
+    <iframe
+        id="frameId"
+        src="./AlgoViewPage.html"
+        width="100%"
+        height="80%"
+        scrolling="no"
+        frameborder="1"
+    ></iframe>
+</div>

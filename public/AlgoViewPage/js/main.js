@@ -15,20 +15,46 @@ class Params {
     constructor() {
         this.pause = false;
         this.autoRotate = false;
-        this.showSystemLoadInfo = true;
-        this.showGraphInfo = true;
 
-        /** уровень ярусно параллельная формы */
+        this.showGraphCharacteristics = true;
+        this.showErrors = true;
+        this.showWarnings = true;
+        this.showSystemLoadInfo = true;
+
+        /** уровень ярусно параллельной формы */
         this.level = 0;
         this.showLevel = true;
 
+        this.defaultLineWidth = 2.5;
+        this.lineWidth;
+        this.axisLineWidth;
+        this.setDefaultLineWidth();
+
         this.fpsRate = 30;
-        this.lineWidth = 4;
         this.cameraType = CameraTypes.perspective;
+    }
+
+    /** Обновляет ширину осевых линий */
+    updateAxisLineWidth() {
+        this.axisLineWidth = this.lineWidth * 1.6;
+    }
+
+    /**
+     * Устанавливает новую ширину линий
+     * @param {number} newLineWidth
+     */
+    setLineWidth(newLineWidth) {
+        this.lineWidth = newLineWidth;
+        this.updateAxisLineWidth();
+    }
+
+    /** Устанавливает стандартную ширину линий */
+    setDefaultLineWidth() {
+        this.setLineWidth(this.defaultLineWidth);
     }
 }
 
-class AlgoViewСonfiguration {
+class AlgoViewConfiguration {
     constructor() {
         this.params = new Params();
         this.configuringThreeJS();
@@ -171,7 +197,7 @@ class AlgoViewСonfiguration {
         const folderViewSettins = this.gui.addFolder("View Settins");
         const folderCameraControls = this.gui.addFolder("Camera Controls");
         const folderSceneControls = this.gui.addFolder("Scene Controls");
-        const folderLevelControls = this.gui.addFolder("Tiered-Parallel Form");
+        const folderLevelControls = this.gui.addFolder("Parallel Form");
 
         folderCameraControls.open();
         folderLevelControls.open();
@@ -184,6 +210,28 @@ class AlgoViewСonfiguration {
          *      ================
          */
 
+        let prevLineWidth = this.params.lineWidth;
+
+        const changeLineWidth = function () {
+            let newLineWidth = thisContextTrans.params.lineWidth;
+
+            if (newLineWidth == null || typeof newLineWidth != "number") {
+                thisContextTrans.params.setDefaultLineWidth();
+                rebuildSceneCallback();
+                return;
+            }
+
+            thisContextTrans.params.setLineWidth(
+                // Math.round(newLineWidth * 2) / 2
+                Math.round(newLineWidth)
+            );
+
+            if (thisContextTrans.params.lineWidth != prevLineWidth) {
+                prevLineWidth = thisContextTrans.params.lineWidth;
+                rebuildSceneCallback();
+            }
+        };
+
         const rebuildSceneCallback = function () {
             controllerContextTrans.rebuildScene();
         };
@@ -193,20 +241,16 @@ class AlgoViewСonfiguration {
         };
 
         const changeCharacteristicsBlock = function () {
-            if (thisContextTrans.params.showGraphInfo) {
-                InfoBlockController.changeCharacteristicsBlock(graphInfo);
-            } else {
-                InfoBlockController.changeCharacteristicsBlock(null);
-            }
+            InfoBlockController.changeCharacteristicsBlock(graphInfo);
         };
 
-        const changeInfoBlock = function () {
+        const changeFPSInfoBlock = function () {
             if (thisContextTrans.params.showSystemLoadInfo == false) {
                 InfoBlockController.changeFPSInfoBlock("", "");
             }
         };
 
-        const maxLevel = graphInfo.characteristics.critical_length;
+        const maxLevel = graphInfo.characteristics.critical_path_length;
 
         const levelInc = function () {
             if (thisContextTrans.params.level < maxLevel) {
@@ -229,7 +273,6 @@ class AlgoViewСonfiguration {
 
         const updateLevelValue = function () {
             const floatLevelValue = thisContextTrans.params.level;
-            // console.log("typeof floatLevelValue = ", typeof floatLevelValue);
 
             if (floatLevelValue < 0 || typeof floatLevelValue != "number") {
                 thisContextTrans.params.level = 0;
@@ -250,22 +293,32 @@ class AlgoViewСonfiguration {
          *      ================
          */
 
-        folderViewSettins.add(this.params, "fpsRate", 20, 100).name("FPS rate");
+        folderViewSettins.add(this.params, "fpsRate", 24, 100).name("FPS rate");
 
         folderViewSettins
-            .add(this.params, "lineWidth", 1, 10)
+            .add(this.params, "lineWidth", 1, 6)
             .name("Line width")
-            .onChange(rebuildSceneCallback);
+            .onChange(changeLineWidth);
+
+        folderViewSettins
+            .add(this.params, "showGraphCharacteristics")
+            .name("Show graph info")
+            .onChange(changeCharacteristicsBlock);
+
+        folderViewSettins
+            .add(this.params, "showErrors")
+            .name("Show errors")
+            .onChange(changeCharacteristicsBlock);
+
+        folderViewSettins
+            .add(this.params, "showWarnings")
+            .name("Show warnings")
+            .onChange(changeCharacteristicsBlock);
 
         folderViewSettins
             .add(this.params, "showSystemLoadInfo")
-            .name("Show load info")
-            .onChange(changeInfoBlock);
-
-        folderViewSettins
-            .add(this.params, "showGraphInfo")
-            .name("Show graph info")
-            .onChange(changeCharacteristicsBlock);
+            .name("Show FPS")
+            .onChange(changeFPSInfoBlock);
 
         /**     ===================
          *        Camera Controls
@@ -358,7 +411,7 @@ class AlgoViewСonfiguration {
     }
 }
 
-const config = new AlgoViewСonfiguration();
+const config = new AlgoViewConfiguration();
 
 /** Модель одной вершины. */
 class Vertex {
@@ -594,8 +647,10 @@ class GraphInfo {
     warnings = new Array();
     errors = new Array();
 
-    /** Маркер наличия проблем */
-    thereAreErrorsOrWarnings = false;
+    /** Маркеры наличия проблем */
+    characteristicsIsEmpty = true;
+    thereAreWarnings = false;
+    thereAreErrors = false;
 
     constructor(graphData) {
         this.graphData = graphData;
@@ -603,43 +658,61 @@ class GraphInfo {
         this.fillInCharacteristics();
         this.fillInWarnings();
         this.fillInErrors();
-
-        if (this.warnings.length != 0 || this.errors.length != 0) {
-            this.thereAreErrorsOrWarnings = true;
-        }
     }
 
     fillInCharacteristics() {
         // characteristics:
         //      vertex_num
         //      edge_num
-        //      critical_length
-        //      width
+        //      critical_path_length
+        //      parallel_form_width
 
         for (const property in this.graphData.characteristics) {
-            this.characteristics[property] =
-                this.graphData.characteristics[property];
+            const value = this.graphData.characteristics[property];
+            this.characteristics[property] = value;
+
+            if (this.characteristicsIsEmpty && value != 0) {
+                this.characteristicsIsEmpty = false;
+            }
         }
     }
 
     fillInWarnings() {
+        if (this.graphData.warnings == null) {
+            console.log("graphData.warnings is null");
+            return;
+        }
+
         for (let i = 0; i < this.graphData.warnings.length; i++) {
             const warningStr = this.graphData.warnings[i];
             this.warnings.push(warningStr);
         }
+
+        if (this.warnings.length != 0) {
+            this.thereAreWarnings = true;
+        }
     }
 
     fillInErrors() {
+        if (this.graphData.errors == null) {
+            console.log("graphData.errors is null");
+            return;
+        }
+
         for (let i = 0; i < this.graphData.errors.length; i++) {
             const errorStr = this.graphData.errors[i];
             this.errors.push(errorStr);
+        }
+
+        if (this.errors.length != 0) {
+            this.thereAreErrors = true;
         }
     }
 }
 
 /** Набор инструментов создания графических объектов. */
 class GraphicObjects {
-    static #createMeshLineByGeo(lineGeometry, colorIndex) {
+    static #createMeshLineByGeo(lineGeometry, lineWidth, colorIndex) {
         const meshLine = new MeshLine();
         meshLine.setGeometry(lineGeometry);
 
@@ -649,7 +722,7 @@ class GraphicObjects {
             opacity: 1,
             resolution: config.resolution,
             sizeAttenuation: false,
-            lineWidth: config.params.lineWidth,
+            lineWidth: lineWidth,
         });
 
         const mesh = new THREE.Mesh(meshLine.geometry, material);
@@ -668,16 +741,26 @@ class GraphicObjects {
         config.graph.add(line);
     }
 
-    static #createStraightMeshLine(sourceVector3, targetVector3, colorIndex) {
+    static #createStraightMeshLine(
+        sourceVector3,
+        targetVector3,
+        lineWidth,
+        colorIndex
+    ) {
         const lineGeometry = new THREE.Geometry();
         lineGeometry.vertices.push(sourceVector3);
         lineGeometry.vertices.push(targetVector3);
 
-        this.#createMeshLineByGeo(lineGeometry, colorIndex);
+        this.#createMeshLineByGeo(lineGeometry, lineWidth, colorIndex);
     }
 
     /** Создает прямую стрелку по двум векторам */
-    static createStraightArrow(sourceVector3, targetVector3, colorIndex = 3) {
+    static createStraightArrow(
+        sourceVector3,
+        targetVector3,
+        lineWidth,
+        colorIndex
+    ) {
         /** Половина высоты конуса у стрелки + радиус большого шара */
         const arrowShiftLength = 1.8 / 2 + 1.8;
 
@@ -701,6 +784,7 @@ class GraphicObjects {
         this.#createStraightMeshLine(
             sourceVector3,
             croppedTargetVector3,
+            lineWidth,
             colorIndex
         );
 
@@ -789,7 +873,12 @@ class GraphicObjects {
     }
 
     /** Создает кривую стрелку по двум векторам */
-    static createCurvedArrow(sourceVector3, targetVector3, colorIndex = 3) {
+    static createCurvedArrow(
+        sourceVector3,
+        targetVector3,
+        lineWidth,
+        colorIndex
+    ) {
         /** Половина высоты конуса у стрелки + радиус большого шара */
         const arrowShiftLength = 1.8 / 2 + 1.8;
 
@@ -838,7 +927,7 @@ class GraphicObjects {
         }
 
         // линия
-        this.#createMeshLineByGeo(lineGeometry, colorIndex);
+        this.#createMeshLineByGeo(lineGeometry, lineWidth, colorIndex);
 
         const coneLocation = new THREE.Vector3(
             lineGeometry[0],
@@ -901,17 +990,23 @@ class GraphicObjects {
     static createAxis(oxAxisLength, oyAxisLength, ozAxisLength) {
         this.createStraightArrow(
             new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(oxAxisLength, 0, 0)
+            new THREE.Vector3(oxAxisLength, 0, 0),
+            config.params.axisLineWidth,
+            3
         );
 
         this.createStraightArrow(
             new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, oyAxisLength, 0)
+            new THREE.Vector3(0, oyAxisLength, 0),
+            config.params.axisLineWidth,
+            3
         );
 
         this.createStraightArrow(
             new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 0, ozAxisLength)
+            new THREE.Vector3(0, 0, ozAxisLength),
+            config.params.axisLineWidth,
+            3
         );
 
         this.#createAxisText(oxAxisLength, oyAxisLength, ozAxisLength);
@@ -961,15 +1056,28 @@ class GraphicObjects {
         config.graph.add(label_z);
     }
 
-    /** Создание освещения на сцене */
-    static createLight() {
+    /**
+     * Создание освещения на сцене. использует координаты для target.position
+     * @param {number} x
+     * @param {number} y
+     * @param {number} z
+     * @returns
+     */
+    static createLight(x, y, z) {
         const color = 0xffffff;
-        const intensity = 0.65;
-        const light = new THREE.DirectionalLight(color, intensity);
-        // light.position.set(0, 0, 0);
-        light.target.position.set(-5, -10, -2);
+        const intensity1 = 0.65;
+        const intensity2 = 0.5;
+        const target = new THREE.Vector3(-5, -10, -2);
+
+        const light = new THREE.DirectionalLight(color, intensity1);
+        light.target.position.copy(target);
         config.graph.add(light);
         config.graph.add(light.target);
+
+        const light2 = new THREE.DirectionalLight(color, intensity2);
+        light2.target.position.copy(target).multiplyScalar(-1);
+        config.graph.add(light2);
+        config.graph.add(light2.target);
 
         // GraphicObjects.createArrow(
         //     new THREE.Vector3(0, 0, 0),
@@ -978,7 +1086,7 @@ class GraphicObjects {
         // );
 
         // https://www.youtube.com/watch?v=T6PhV4Hz0u4
-        const ambientIntensity = 1 - intensity;
+        const ambientIntensity = 1 - intensity1; // сумма света максимум должна быть 1
         const ambientLight = new THREE.AmbientLight(color, ambientIntensity);
         config.graph.add(ambientLight);
 
@@ -1021,44 +1129,30 @@ class GraphicObjects {
     }
 
     /** Создает октаэдр по заданным координатам */
-    static createOctahedron(x, y, z, colorIndex) {
+    static createOctahedron(x, y, z, colorIndex, texture = null) {
+        // https://threejs.org/docs/#api/en/geometries/OctahedronGeometry
+
+        const octahedronRadius = 1.8;
+        const octahedronGeo = new THREE.OctahedronGeometry(octahedronRadius);
+
+        const octahedronMat = new THREE.MeshPhongMaterial({
+            map: texture,
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(octahedronGeo, octahedronMat);
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает октаэдр по заданным координатам */
+    static createOctahedronWithTexture(x, y, z, colorIndex) {
         // https://stackoverflow.com/questions/7919516/using-textures-in-three-js
 
         const loader = new THREE.TextureLoader();
         loader.load("./textures/glass_texture_5.jpeg", function (texture) {
-            // https://threejs.org/docs/#api/en/geometries/OctahedronGeometry
-
-            const octahedronRadius = 1.8;
-            const octahedronGeo = new THREE.OctahedronGeometry(
-                octahedronRadius
-            );
-
-            const octahedronMat = new THREE.MeshPhongMaterial({
-                map: texture,
-                color: colors[colorIndex],
-            });
-
-            const mesh = new THREE.Mesh(octahedronGeo, octahedronMat);
-            mesh.position.set(x, y, z);
-            config.graph.add(mesh);
+            GraphicObjects.createOctahedron(x, y, z, colorIndex, texture);
         });
-    }
-}
-
-/** Модель загрузки данных. */
-class DataLoader {
-    static emptyGraphDataTemplate = { vertices: [], edges: [] };
-
-    constructor() {
-        this.graphData = DataLoader.emptyGraphDataTemplate;
-    }
-
-    loadGraphData() {
-        // jsonGraphData загружена в html страничке
-        // !!!
-        this.graphData = JSON.parse(jsonGraphData);
-
-        return this.graphData;
     }
 }
 
@@ -1067,9 +1161,11 @@ class DataLoader {
  * Содержит:
  * * обработанные данные графа. */
 class Model {
-    constructor() {
+    constructor() {}
+
+    async build() {
         const dataLoader = new DataLoader();
-        this.graphData = dataLoader.loadGraphData();
+        this.graphData = await dataLoader.loadGraphData();
 
         this.graph = new Graph(this.graphData);
         this.graphInfo = new GraphInfo(this.graphData);
@@ -1116,7 +1212,7 @@ class View {
 
     /** Наполнение сцены светом, осями координат */
     setupSceneView() {
-        const lightContext = GraphicObjects.createLight();
+        const lightContext1 = GraphicObjects.createLight();
 
         // config.controls.addEventListener("change", function () {
         //     const x = config.camera.position.x;
@@ -1160,12 +1256,26 @@ class View {
         // 2 - большой шар
         // 3 - хз пока что
 
-        // 1 - yellow
-        // 2 - blue
-        const color =
-            config.params.showLevel && vertex.level == config.params.level
-                ? 2
-                : 1;
+        // цвета
+        // 1 - мягко желтый
+        // 2 - мягко голубой
+        // 3 - темно голубой
+        // 4 - серый
+        // 6 - красный
+        // 7 - темно желный
+        // 8 - мятный. для входных
+
+        let color = 1; // дефолт
+
+        if (vertex.level == 0) {
+            color = 8;
+        } else if (config.params.showLevel) {
+            if (vertex.level == config.params.level) {
+                color = 2;
+            } else if (vertex.level <= config.params.level) {
+                color = 4;
+            }
+        }
 
         if (vertex.level == 0) {
             GraphicObjects.createOctahedron(
@@ -1231,12 +1341,14 @@ class View {
             GraphicObjects.createCurvedArrow(
                 edge.sourceVertex.pos,
                 edge.targetVertex.pos,
+                config.params.lineWidth,
                 color
             );
         } else {
             GraphicObjects.createStraightArrow(
                 edge.sourceVertex.pos,
                 edge.targetVertex.pos,
+                config.params.lineWidth,
                 color
             );
         }
@@ -1278,36 +1390,47 @@ class InfoBlockController {
         let content = "";
 
         if (graphInfo != null) {
-            const info = graphInfo.characteristics;
-            const warnings = graphInfo.warnings;
-            const errors = graphInfo.errors;
-
-            let text = "<b><i>Graph characteristics:</i></b><br>";
-            text += "• vertex num: " + info.vertex_num + "<br>";
-            text += "• edge num: " + info.edge_num + "<br>";
-            text += "• critical length: " + info.critical_length + "<br>";
-            text += "• width: " + info.width + "<br>";
-
-            if (warnings.length != 0) {
-                text +=
-                    "<br><b><i>Warnings (" + warnings.length + "):</i></b><br>";
-
-                for (let i = 0; i < warnings.length; i++) {
-                    const num = i + 1;
-                    text += "<b>" + num + ":</b> " + warnings[i] + "<br>";
-                }
+            if (
+                config.params.showGraphCharacteristics &&
+                !graphInfo.characteristicsIsEmpty
+            ) {
+                const info = graphInfo.characteristics;
+                content = "<b><i>Graph characteristics:</i></b><br>";
+                content += "• vertex num: " + info.vertex_num + "<br>";
+                content += "• edge num: " + info.edge_num + "<br>";
+                content +=
+                    "• critical path length: " +
+                    info.critical_path_length +
+                    "<br>";
+                content +=
+                    "• parallel form width: " +
+                    info.parallel_form_width +
+                    "<br><br>";
             }
 
-            if (errors.length != 0) {
-                text += "<br><b><i>Errors (" + errors.length + "):</i></b><br>";
+            if (config.params.showErrors && graphInfo.thereAreErrors) {
+                const errors = graphInfo.errors;
+                content += "<b><i>Errors (" + errors.length + "):</i></b><br>";
 
                 for (let i = 0; i < errors.length; i++) {
                     const num = i + 1;
-                    text += "<b>" + num + ":</b> " + errors[i] + "<br>";
+                    content += "<b>" + num + ":</b> " + errors[i] + "<br>";
                 }
+
+                content += "<br>";
             }
 
-            content = text; //"<h4>" + text + "</h4>";
+            if (config.params.showWarnings && graphInfo.thereAreWarnings) {
+                const warnings = graphInfo.warnings;
+
+                content +=
+                    "<b><i>Warnings (" + warnings.length + "):</i></b><br>";
+
+                for (let i = 0; i < warnings.length; i++) {
+                    const num = i + 1;
+                    content += "<b>" + num + ":</b> " + warnings[i] + "<br>";
+                }
+            }
         }
 
         document.getElementById("textInfoBlock_0").innerHTML = content;
@@ -1354,18 +1477,20 @@ class AppManager {
 class App {
     constructor() {
         this.appManager = new AppManager();
+    }
+
+    async build() {
         this.model = new Model();
+        await this.model.build();
+
         this.view = new View(this.model);
         this.controller = new Controller(this.appManager, this.view);
 
         config.setControllerContext(this.controller);
         config.setupGUI(this.model.graphInfo);
 
-        if (config.params.showGraphInfo) {
-            InfoBlockController.changeCharacteristicsBlock(
-                this.model.graphInfo
-            );
-        }
+        // if (config.params.showGraphInfo)
+        InfoBlockController.changeCharacteristicsBlock(this.model.graphInfo);
 
         this.appManager.setDoneBuildStatus();
     }
@@ -1459,6 +1584,13 @@ async function renderLoop() {
     //     camera.updateProjectionMatrix();
     // }
 
+    if (app.appManager.buildStatus != "done") {
+        console.log("Waiting for the application to finish building.");
+        await sleep(100);
+        requestAnimationFrame(renderLoop);
+        return;
+    }
+
     const startTime = performance.now();
 
     if (!config.params.pause) {
@@ -1494,5 +1626,6 @@ async function renderLoop() {
 }
 
 const app = new App();
+app.build();
 
 renderLoop();

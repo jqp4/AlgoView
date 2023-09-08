@@ -41,6 +41,7 @@ h1 {
 
 #textInfoBlock_0 {
     position: absolute;
+    opacity: 1;
     left: 20px;
     top: 84px;
     width: 400px;
@@ -48,12 +49,14 @@ h1 {
 
 #textInfoBlock_1 {
     position: absolute;
+    opacity: 1;
     right: 20px;
     bottom: 42px;
 }
 
 #textInfoBlock_2 {
     position: absolute;
+    opacity: 1;
     right: 20px;
     bottom: 20px;
 }

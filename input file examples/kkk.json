@@ -2,8 +2,8 @@
     "characteristics": {
         "vertex_num": 7,
         "edge_num": 2,
-        "critical_length": 2,
-        "width": 2
+        "critical_path_length": 2,
+        "parallel_form_width": 2
     },
     "vertices": [
         { "id": 0, "coordinates": [0, 0, 0], "type": "1", "level": 0 },
@@ -34,5 +34,5 @@
         "Vertex with current coords = [1, 7, 0] will be ignored, since it exceed defined range of arguments",
         "Vertex with current coords = [1, 8, 0] will be ignored, since it exceed defined range of arguments"
     ],
-    "errors": []
+    "errors": ["err ex"]
 }
