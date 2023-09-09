@@ -44,10 +44,10 @@ if [[ $1 == *.json ]]; then # * is used for pattern matching
     # input.json --> jsonGraphData.js
     json_to_js $1
 else
-    draw_info_box ".js file has been loaded, launch the architect"
+    draw_info_box ".xml file has been loaded, launch the architect"
 
     # input.xml --> output.json
-    draw_info_box "run ./main $1"
+    draw_info_box "run ./main $1 output.json"
     ./main $1
 
     # output.json --> jsonGraphData.js

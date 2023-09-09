@@ -422,12 +422,14 @@ class Vertex {
      * @param {number} y
      * @param {number} z
      * @param {string} type
+     * @param {string} info
      * @param {number} level
      */
-    constructor(id, x, y, z, type, level) {
+    constructor(id, x, y, z, type, info, level) {
         this.id = id;
         this.pos = new THREE.Vector3(x, y, z);
         this.type = type;
+        this.info = info;
         this.level = level;
     }
 }
@@ -495,7 +497,7 @@ class Graph {
             //     element.coordinates[2]
             // );
 
-            const isVertexShifted = false; // element.level == 0;
+            const isVertexShifted = element.info == "extra";
 
             const vertex = new Vertex(
                 element.id,
@@ -511,8 +513,9 @@ class Graph {
                     element.coordinates[2],
                     isVertexShifted
                 ),
-                element.type,
-                element.level
+                element.type, // type: "0" / "1" / ...
+                element.info, // info: "normal" / "extra"
+                element.level // level: 1, 2, 3, ...
             );
 
             this.vertices.set(element.id, vertex);
@@ -1267,7 +1270,7 @@ class View {
 
         let color = 1; // дефолт
 
-        if (vertex.level == 0) {
+        if (vertex.type == 0) {
             color = 8;
         } else if (config.params.showLevel) {
             if (vertex.level == config.params.level) {
@@ -1277,24 +1280,21 @@ class View {
             }
         }
 
-        if (vertex.level == 0) {
-            GraphicObjects.createOctahedron(
-                vertex.pos.x,
-                vertex.pos.y,
-                vertex.pos.z,
-                color
-            );
-
-            return;
-        }
-
         switch (vertex.type) {
+            case "0": {
+                GraphicObjects.createOctahedron(
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
+                    color
+                );
+                break;
+            }
             case "1": {
                 GraphicObjects.createSphere(
                     vertex.pos.x,
                     vertex.pos.y,
                     vertex.pos.z,
-
                     1.3,
                     color
                 );
@@ -1306,7 +1306,6 @@ class View {
                     vertex.pos.x,
                     vertex.pos.y,
                     vertex.pos.z,
-
                     1.8,
                     color
                 );
