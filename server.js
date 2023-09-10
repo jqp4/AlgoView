@@ -145,7 +145,7 @@ router.post("/upload-single-file", upload.single("file"), (ctx) => {
 
     const filename = ctx.request.file.filename;
     const command = "/bin/bash scripts/run.sh " + UPLOAD_DIR + "/" + filename;
-    console.log(`[node.js server: run ${command}]`);
+    console.log(`>>>    [node.js server] run ${command}`);
 
     // https://stackabuse.com/executing-shell-commands-with-node-js/
     const shScript = exec(command, (error, stdout, stderr) => {

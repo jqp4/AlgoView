@@ -5,7 +5,7 @@
    <block id = "0" dims = "1">
 	<arg name = "i" val = "1..N"></arg>
 	<vertex condition = "" type = "1">
-		<in src = "i – 2"></in>
+		<in src = "i - 2"></in>
 	</vertex>
    </block>
    <block id = "1" dims = "2">
@@ -19,9 +19,9 @@
 	<arg name = "i" val = "1..N"></arg>
 	<arg name = "j" val = "1..N"></arg>
         <arg name = "k" val = "1..N"></arg>
-	<vertex condition = "(k == 1) || (i == 1)" type = "1">
+	<vertex condition = "(k == 1) or (i == 1)" type = "1">
 	</vertex>
-	<vertex condition = "(k > 1) && (i > 1)" type = "1">
+	<vertex condition = "(k > 1) and (i > 1)" type = "1">
 		<in src = "1, j, 1"></in>
 	</vertex>
    </block>

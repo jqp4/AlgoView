@@ -41,7 +41,7 @@ class Params {
 
     /**
      * Устанавливает новую ширину линий
-     * @param {number} newLineWidth
+     * @param {Number} newLineWidth
      */
     setLineWidth(newLineWidth) {
         this.lineWidth = newLineWidth;
@@ -417,13 +417,13 @@ const config = new AlgoViewConfiguration();
 class Vertex {
     /**
      *
-     * @param {number} id
-     * @param {number} x
-     * @param {number} y
-     * @param {number} z
+     * @param {Number} id
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} z
      * @param {string} type
      * @param {string} info
-     * @param {number} level
+     * @param {Number} level
      */
     constructor(id, x, y, z, type, info, level) {
         this.id = id;
@@ -438,11 +438,11 @@ class Vertex {
 class Edge {
     /**
      *
-     * @param {number} id
+     * @param {Number} id
      * @param {Vertex} sourceVertex
      * @param {Vertex} targetVertex
      * @param {string} type
-     * @param {number} level
+     * @param {Number} level
      * @param {boolean} requiresBending
      */
     constructor(id, sourceVertex, targetVertex, type, level, requiresBending) {
@@ -477,7 +477,7 @@ class Graph {
 
     /**
      * Преобразование координат
-     * @param {number} value
+     * @param {Number} value
      * @returns преобразованное значение
      */
     coordinateTransform(value, isVertexShifted = false) {
@@ -524,9 +524,9 @@ class Graph {
 
     /**
      * Проверка на необходимость сдвига вершины
-     * @param {number} x
-     * @param {number} y
-     * @param {number} z
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} z
      */
     // checkVertexForRequiredShift(x, y, z) {
     //     let answer = false;
@@ -894,8 +894,10 @@ class GraphicObjects {
          *  исходящий из начала координат */
         const len = sourceVector3.distanceTo(targetVector3);
 
-        /** радиус окружности */
-        const r = len * 0.85;
+        /** радиус окружности
+         *  k = 0.5 -- полуокружность
+         *  k = 1.0 -- 1/6 окружности */
+        const r = len * 1.1;
 
         /** координаты центра окружности */
         const x0 = len / 2;
@@ -961,8 +963,6 @@ class GraphicObjects {
 
     /** Возвращает THREE.Mesh для конуса */
     static #getConeMesh(colorIndex = 3) {
-        // конус
-        // https://customizer.github.io/three.js-doc.ru/geometries/coneBufferGeometry.htm
         // https://threejs.org/docs/#api/en/geometries/ConeGeometry
 
         const coneRadius = 0.6;
@@ -986,9 +986,9 @@ class GraphicObjects {
 
     /**
      * Построение осей координат x, y, z
-     * @param {number} oxAxisLength
-     * @param {number} oyAxisLength
-     * @param {number} oxAxisLength
+     * @param {Number} oxAxisLength
+     * @param {Number} oyAxisLength
+     * @param {Number} oxAxisLength
      */
     static createAxis(oxAxisLength, oyAxisLength, ozAxisLength) {
         this.createStraightArrow(
@@ -1015,11 +1015,11 @@ class GraphicObjects {
         this.#createAxisText(oxAxisLength, oyAxisLength, ozAxisLength);
     }
 
-    static #getTextParameters(text, fontSize) {
+    static #getTextParameters(text, fontSize, color = "#000000") {
         return {
             alignment: "center",
             backgroundColor: "rgba(0,0,0,0)",
-            color: "#000000",
+            color: color,
             fontFamily: "sans-serif",
             fontSize: fontSize,
             fontStyle: "normal",
@@ -1027,17 +1027,17 @@ class GraphicObjects {
             fontWeight: "normal",
             lineGap: 0.25,
             padding: 0.5,
-            strokeColor: "#fff",
-            strokeWidth: 0,
+            strokeColor: "#000000",
+            strokeWidth: 0.02,
             text: text,
         };
     }
 
     /**
      * Построение подписей осей координат x, y, z
-     * @param {number} oxAxisLength
-     * @param {number} oyAxisLength
-     * @param {number} oxAxisLength
+     * @param {Number} oxAxisLength
+     * @param {Number} oyAxisLength
+     * @param {Number} oxAxisLength
      */
     static #createAxisText(oxAxisLength, oyAxisLength, ozAxisLength) {
         const fontSize = 5;
@@ -1060,45 +1060,68 @@ class GraphicObjects {
     }
 
     /**
-     * Создание освещения на сцене. использует координаты для target.position
-     * @param {number} x
-     * @param {number} y
-     * @param {number} z
-     * @returns
+     * Построение текста на координатах
+     * @param {String} text
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} z
+     * @param {Number} colorIndex
      */
-    static createLight(x, y, z) {
+    static createCustomText(text, x, y, z, colorIndex) {
+        const fontSize = 4;
+        const colorStr = "#" + colors[colorIndex].toString(16);
+        const parameters = this.#getTextParameters(text, fontSize, colorStr);
+        const label = new THREE.TextSprite(parameters);
+
+        label.position.set(x, y, z);
+        config.graph.add(label);
+    }
+
+    /** Создание освещения на сцене. */
+    static createLight() {
         const color = 0xffffff;
         const intensity1 = 0.65;
         const intensity2 = 0.5;
         const target = new THREE.Vector3(-5, -10, -2);
+        const light = new THREE.Object3D();
 
-        const light = new THREE.DirectionalLight(color, intensity1);
-        light.target.position.copy(target);
-        config.graph.add(light);
-        config.graph.add(light.target);
+        const directionalLight1 = new THREE.DirectionalLight(color, intensity1);
+        directionalLight1.target.position.copy(target);
+        light.add(directionalLight1);
+        light.add(directionalLight1.target);
 
-        const light2 = new THREE.DirectionalLight(color, intensity2);
-        light2.target.position.copy(target).multiplyScalar(-1);
-        config.graph.add(light2);
-        config.graph.add(light2.target);
-
-        // GraphicObjects.createArrow(
-        //     new THREE.Vector3(0, 0, 0),
-        //     new THREE.Vector3(-5, -10, -2),
-        //     7
-        // );
+        const directionalLight2 = new THREE.DirectionalLight(color, intensity2);
+        directionalLight2.target.position.copy(target).multiplyScalar(-1);
+        light.add(directionalLight2);
+        light.add(directionalLight2.target);
 
         // https://www.youtube.com/watch?v=T6PhV4Hz0u4
-        const ambientIntensity = 1 - intensity1; // сумма света максимум должна быть 1
+        // Cумма всего света в каждой точке должна быть не более 1
+        const ambientIntensity = 1 - Math.max(intensity1, intensity2);
         const ambientLight = new THREE.AmbientLight(color, ambientIntensity);
-        config.graph.add(ambientLight);
+        light.add(ambientLight);
 
+        config.graph.add(light);
         return light;
     }
 
+    /** Создает куб по заданным координатам */
+    static createCube(x, y, z, colorIndex) {
+        const cubeSize = 2.5;
+        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+        const cubeMat = new THREE.MeshPhongMaterial({
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(cubeGeo, cubeMat);
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
     /** Создает сферу по заданным координатам */
-    static createSphere(x, y, z, sphereRadius = 2, colorIndex = 1) {
-        // const sphereRadius = 2;
+    static createSphere(x, y, z, colorIndex) {
+        const sphereRadius = 1.5;
         const sphereWidthDivisions = 16;
         const sphereHeightDivisions = 16;
         const sphereGeo = new THREE.SphereGeometry(
@@ -1112,21 +1135,139 @@ class GraphicObjects {
         });
 
         const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+
         mesh.position.set(x, y, z);
         config.graph.add(mesh);
     }
 
-    /** Создает куб по заданным координатам */
-    static createCube(x, y, z, colorIndex = 1) {
-        const cubeSize = 2;
-        const cubeGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+    /** Создает тетраэдр по заданным координатам */
+    static createTetrahed(x, y, z, colorIndex, texture = null) {
+        const tetrahedronRadius = 2;
+        const tetrahedronGeo = new THREE.TetrahedronGeometry(tetrahedronRadius);
 
-        // const cubeMat = new THREE.MeshPhongMaterial({ color: "#8AC" });
-        const cubeMat = new THREE.MeshPhongMaterial({
+        const tetrahedronMat = new THREE.MeshPhongMaterial({
+            map: texture,
             color: colors[colorIndex],
         });
 
-        const mesh = new THREE.Mesh(cubeGeo, cubeMat);
+        const mesh = new THREE.Mesh(tetrahedronGeo, tetrahedronMat);
+
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает додекаэдр (двенадцатигранник) по заданным координатам */
+    static createDodecahedron(x, y, z, colorIndex, texture = null) {
+        const dodecahedronRadius = 1.55;
+        const dodecahedronGeo = new THREE.DodecahedronGeometry(
+            dodecahedronRadius
+        );
+
+        const dodecahedronMat = new THREE.MeshPhongMaterial({
+            map: texture,
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(dodecahedronGeo, dodecahedronMat);
+
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает цилиндр по заданным координатам */
+    static createCylinder(x, y, z, colorIndex, texture = null) {
+        // https://threejs.org/docs/#api/en/geometries/CylinderGeometry
+
+        const cylinderGeo = new THREE.CylinderGeometry(0.7, 1.3, 2.4, 20);
+        const cylinderMat = new THREE.MeshPhongMaterial({
+            map: texture,
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(cylinderGeo, cylinderMat);
+
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает тор по заданным координатам */
+    static createTorus(x, y, z, colorIndex, texture = null) {
+        /** https://threejs.org/docs/#api/en/geometries/TorusGeometry
+         *  TorusGeometry( radius, tube, radialSegments, tubularSegments, arc )
+         *  radius - Radius of the torus, from the center of the torus to the center of the tube. Default is 1.
+         *  tube — Radius of the tube. Default is 0.4.
+         *  radialSegments — Default is 12
+         *  tubularSegments — Default is 48.
+         *  arc — Central angle. Default is Math.PI * 2.
+         */
+
+        const torusGeo = new THREE.TorusGeometry(1.4, 0.5, 10, 30);
+
+        const torusMat = new THREE.MeshPhongMaterial({
+            map: texture,
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(torusGeo, torusMat);
+
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает тор всего с 4 сегментами по заданным координатам */
+    static createTorus_4(x, y, z, colorIndex, texture = null) {
+        /** https://threejs.org/docs/#api/en/geometries/TorusGeometry
+         *  TorusGeometry( radius, tube, radialSegments, tubularSegments, arc )
+         *  radius - Radius of the torus, from the center of the torus to the center of the tube. Default is 1.
+         *  tube — Radius of the tube. Default is 0.4.
+         *  radialSegments — Default is 12
+         *  tubularSegments — Default is 48.
+         *  arc — Central angle. Default is Math.PI * 2.
+         */
+
+        const torusGeo = new THREE.TorusGeometry(1.4, 0.6, 4, 4);
+
+        const torusMat = new THREE.MeshPhongMaterial({
+            map: texture,
+            flatShading: true,
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(torusGeo, torusMat);
+
+        mesh.position.set(x, y, z);
+        config.graph.add(mesh);
+    }
+
+    /** Создает тор узелком по заданным координатам */
+    static createTorusKnot(x, y, z, colorIndex, texture = null) {
+        /** https://threejs.org/docs/#api/en/geometries/TorusKnotGeometry
+         *  TorusKnotGeometry(radius, tube, tubularSegments, radialSegments, p, q)
+         *  radius - Radius of the torus. Default is 1.
+         *  tube — Radius of the tube. Default is 0.4.
+         *  tubularSegments — Default is 64.
+         *  radialSegments — Default is 8.
+         *  p — This value determines, how many times the geometry winds around its axis of rotational symmetry. Default is 2.
+         *  q — This value determines, how many times the geometry winds around a circle in the interior of the torus. Default is 3.
+         */
+
+        const torusKnotGeo = new THREE.TorusKnotGeometry(
+            1.1,
+            0.3,
+            100,
+            12,
+            2,
+            3
+        );
+
+        const torusKnotMat = new THREE.MeshPhongMaterial({
+            map: texture,
+            // flatShading: true,
+            color: colors[colorIndex],
+        });
+
+        const mesh = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+
         mesh.position.set(x, y, z);
         config.graph.add(mesh);
     }
@@ -1156,6 +1297,26 @@ class GraphicObjects {
         loader.load("./textures/glass_texture_5.jpeg", function (texture) {
             GraphicObjects.createOctahedron(x, y, z, colorIndex, texture);
         });
+    }
+
+    /**
+     * Подсчитывает количество полигонов объекта THREE.Mesh
+     * @param {THREE.Mesh} object
+     */
+    static countObjectPolygons(object) {
+        if (!object.isMesh) return 0;
+
+        const geometry = object.geometry;
+
+        let triangles = -1;
+
+        if (geometry.index != null) {
+            triangles = geometry.index.count / 3;
+        } else if (geometry.attributes != null) {
+            triangles = geometry.attributes.position.count / 3;
+        }
+
+        return triangles;
     }
 }
 
@@ -1254,11 +1415,6 @@ class View {
      * @param {Vertex} vertex - вершина, экземпляр класса `Vertex`.
      */
     buildVertexObject(vertex) {
-        // [old] 0 - октаэдр (входная/выходная вершина)
-        // 1 - маленький шар
-        // 2 - большой шар
-        // 3 - хз пока что
-
         // цвета
         // 1 - мягко желтый
         // 2 - мягко голубой
@@ -1282,6 +1438,7 @@ class View {
 
         switch (vertex.type) {
             case "0": {
+                // input/output vertex
                 GraphicObjects.createOctahedron(
                     vertex.pos.x,
                     vertex.pos.y,
@@ -1295,24 +1452,68 @@ class View {
                     vertex.pos.x,
                     vertex.pos.y,
                     vertex.pos.z,
-                    1.3,
                     color
                 );
                 break;
             }
-
             case "2": {
-                GraphicObjects.createSphere(
+                GraphicObjects.createDodecahedron(
                     vertex.pos.x,
                     vertex.pos.y,
                     vertex.pos.z,
-                    1.8,
+                    color
+                );
+                break;
+            }
+            case "3": {
+                GraphicObjects.createCylinder(
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
+                    color
+                );
+                break;
+            }
+            case "4": {
+                GraphicObjects.createCube(
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
+                    color
+                );
+                break;
+            }
+            case "5": {
+                // GraphicObjects.createTetrahed
+                GraphicObjects.createTorus(
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
+                    color
+                );
+                break;
+            }
+            case "6": {
+                GraphicObjects.createTorus_4(
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
+                    color
+                );
+                break;
+            }
+            case "7": {
+                GraphicObjects.createTorusKnot(
+                    vertex.pos.x,
+                    vertex.pos.y,
+                    vertex.pos.z,
                     color
                 );
                 break;
             }
             default: {
-                GraphicObjects.createCube(
+                GraphicObjects.createCustomText(
+                    "?",
                     vertex.pos.x,
                     vertex.pos.y,
                     vertex.pos.z,

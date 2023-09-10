@@ -1,0 +1,76 @@
+{
+    "characteristics": {
+        "vertex_num": 0,
+        "edge_num": 0,
+        "critical_path_length": 0,
+        "parallel_form_width": 0
+    },
+    "vertices": [
+        {
+            "id": 0,
+            "coordinates": [0, 1, 0],
+            "type": "0",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 1,
+            "coordinates": [1, 1, 0],
+            "type": "1",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 2,
+            "coordinates": [2, 1, 0],
+            "type": "2",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 3,
+            "coordinates": [3, 1, 0],
+            "type": "3",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 4,
+            "coordinates": [0, 0, 0],
+            "type": "4",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 5,
+            "coordinates": [1, 0, 0],
+            "type": "5",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 6,
+            "coordinates": [2, 0, 0],
+            "type": "6",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 7,
+            "coordinates": [3, 0, 0],
+            "type": "7",
+            "info": "normal",
+            "level": 0
+        },
+        {
+            "id": 8,
+            "coordinates": [4, 0, 0],
+            "type": "???",
+            "info": "normal",
+            "level": 0
+        }
+    ],
+    "edges": [],
+    "warnings": [],
+    "errors": []
+}

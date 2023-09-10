@@ -1,28 +1,26 @@
 #!/bin/bash
 
+readonly AlgoViewDataFolderPath="../public/AlgoViewPage/data"
+readonly AlgoViewDataJSFilePath="../public/AlgoViewPage/data/jsonGraphData.js"
+
 function draw_info_box() {
     local date=$(date +%Y-%m-%d)
     local time=$(date +%H:%M:%S)
     local info="    [$date $time] $*    "
 
-    tput setaf 3
-
-    echo "┏${info//?/━}┓"
-    echo "┃$(tput setaf 4)$info$(tput setaf 3)┃"
-    echo "┗${info//?/━}┛"
-
-    tput sgr 0
+    # tput setaf 3
+    # echo "┏${info//?/━}┓"
+    # echo "┃$(tput setaf 4)$info$(tput setaf 3)┃"
+    # echo "┗${info//?/━}┛"
+    # tput sgr 0
 
     # echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    # echo "$info"
+    echo ">>>$info"
     # echo
 
     # # sed -r 's/(.{8}) /\1\n/g' <<<$1 |
     # #     awk '{rest=(12 - length); printf "%s%s|\n", $0, substr(".........", 1, rest)}'
 }
-
-readonly AlgoViewDataFolderPath="../public/AlgoViewPage/data"
-readonly AlgoViewDataJSFilePath="../public/AlgoViewPage/data/jsonGraphData.js"
 
 function json_to_js() {
     # $1 = path_to_file.json
@@ -47,12 +45,11 @@ else
     draw_info_box ".xml file has been loaded, launch the architect"
 
     # input.xml --> output.json
-    draw_info_box "run ./main $1 output.json"
-    ./main $1
+    draw_info_box "run ./main $1 ./output.json"
+    ./main $1 "output.json"
 
     # output.json --> jsonGraphData.js
-    echo "\n"
     json_to_js "output.json"
 fi
 
-draw_info_box "done!"
+draw_info_box "Completed!"
