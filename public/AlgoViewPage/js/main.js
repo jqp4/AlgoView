@@ -1,15 +1,15 @@
 "use strict";
 
-const CameraTypes = {
-    perspective: "Perspective",
-    orthographic: "Orthographic",
-};
-
 const colors = [
     0xed6a5a, 0xf4f1bb, 0x9bc1bc, 0x5ca4a9, 0xe6ebe0, 0xf0b67f, 0xfe5f55,
     0xd6d1b1, 0xc7efcf, 0xeef5db, 0x50514f, 0xf25f5c, 0xffe066, 0x247ba0,
     0x70c1b3,
 ];
+
+const CameraTypes = {
+    perspective: "Perspective",
+    orthographic: "Orthographic",
+};
 
 class Params {
     constructor() {
@@ -72,7 +72,7 @@ class AlgoViewConfiguration {
     }
 
     configuringThreeJS() {
-        this.container = document.getElementById("container");
+        this.container = document.getElementById("algoview_container");
         this.scene = new THREE.Scene();
 
         this.camera = this.createCamera();
@@ -196,9 +196,10 @@ class AlgoViewConfiguration {
         this.gui = new dat.GUI();
         const folderViewSettins = this.gui.addFolder("View Settins");
         const folderCameraControls = this.gui.addFolder("Camera Controls");
-        const folderSceneControls = this.gui.addFolder("Scene Controls");
         const folderLevelControls = this.gui.addFolder("Parallel Form");
+        const folderSceneControls = this.gui.addFolder("Scene Controls");
 
+        folderViewSettins.open();
         folderCameraControls.open();
         folderLevelControls.open();
 
@@ -470,6 +471,7 @@ class Graph {
         this.graphData = graphData;
 
         this.createVertices();
+        this.shiftProblemVertices();
         this.createEdges();
 
         this.size = this.getSize();
@@ -522,26 +524,72 @@ class Graph {
         }
     }
 
+    // tmp
+    shiftProblemVertices() {
+        const context = this;
+
+        this.vertices.forEach(function (vertex) {
+            if (vertex.type != "0") return;
+
+            const isVertexNeedsShifting =
+                context.checkVertexForRequiredShift(vertex);
+
+            if (isVertexNeedsShifting) {
+                console.log(
+                    '[tmp] Shift problem vertex with type = "0", id =',
+                    vertex.id
+                );
+
+                vertex.pos.set(
+                    vertex.pos.x + 0.5 * context.#scale,
+                    vertex.pos.y + 0.5 * context.#scale,
+                    vertex.pos.z + 0.5 * context.#scale
+                );
+            }
+        });
+    }
+
     /**
-     * Проверка на необходимость сдвига вершины
+     * Проверка на необходимость сдвига уже созданной вершины
+     * @param {Vertex} a
+     */
+    checkVertexForRequiredShift(vertex) {
+        let answer = false;
+
+        this.vertices.forEach(function (vertex2) {
+            if (answer == true || vertex.id == vertex2.id) return;
+
+            if (
+                vertex.pos.x == vertex2.pos.x &&
+                vertex.pos.y == vertex2.pos.y &&
+                vertex.pos.z == vertex2.pos.z
+            ) {
+                answer = true;
+            }
+        });
+
+        return answer;
+    }
+
+    /**
+     * Проверка на необходимость сдвига еще НЕ созданной вершины
      * @param {Number} x
      * @param {Number} y
      * @param {Number} z
      */
-    // checkVertexForRequiredShift(x, y, z) {
-    //     let answer = false;
+    checkNewVertexForRequiredShift(x, y, z) {
+        let answer = false;
 
-    //     this.vertices.forEach(function (vertex, id, map) {
-    //         if (answer == true) return;
-    //         console.log(vertex.pos.x, x);
+        this.vertices.forEach(function (vertex) {
+            if (answer == true) return;
 
-    //         if (vertex.pos.x == x && vertex.pos.y == y && vertex.pos.z == z) {
-    //             answer = true;
-    //         }
-    //     });
+            if (vertex.pos.x == x && vertex.pos.y == y && vertex.pos.z == z) {
+                answer = true;
+            }
+        });
 
-    //     return answer;
-    // }
+        return answer;
+    }
 
     createEdges() {
         for (let i = 0; i < this.graphData.edges.length; i++) {
@@ -1765,25 +1813,20 @@ class FPSManager {
 
 const fpsManager = new FPSManager();
 
-// function resizeRendererToDisplaySize(renderer) {
-//     const canvas = renderer.domElement;
-//     const pixelRatio = window.devicePixelRatio;
-//     const width = (canvas.clientWidth * pixelRatio) | 0;
-//     const height = (canvas.clientHeight * pixelRatio) | 0;
-//     const needResize = canvas.width !== width || canvas.height !== height;
-//     if (needResize) {
-//         renderer.setSize(width, height, false);
-//     }
-//     return needResize;
-// }
+function resizeRendererToDisplaySize() {
+    const canvas = config.renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+
+    if (needResize) {
+        config.renderer.setSize(width, height, false);
+        config.camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        config.camera.updateProjectionMatrix();
+    }
+}
 
 async function renderLoop() {
-    // if (resizeRendererToDisplaySize(renderer)) {
-    //     const canvas = renderer.domElement;
-    //     camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    //     camera.updateProjectionMatrix();
-    // }
-
     if (app.appManager.buildStatus != "done") {
         console.log("Waiting for the application to finish building.");
         await sleep(100);
@@ -1792,6 +1835,7 @@ async function renderLoop() {
     }
 
     const startTime = performance.now();
+    resizeRendererToDisplaySize();
 
     if (!config.params.pause) {
         if (config.params.autoRotate) {

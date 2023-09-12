@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<algo>
+	<params>
+		<param name = "N" type = "int" value = "7"></param>
+		<param name = "M" type = "int" value = "4"></param>
+  </params>
+  <block id = "0" dims = "1">
+		<arg name = "j" val = "2..M+1"></arg>
+  </block>
+  <block id = "1" dims = "2">
+		<arg name = "i" val = "2..N+1"></arg>
+		<arg name = "j" val = "2..M+1"></arg>
+		<vertex condition = "" type = "1">
+			<in src = "i-1, j"></in>
+			<in bsrc = "0" src = "j"></in>
+		</vertex>
+  </block>
+</algo>
