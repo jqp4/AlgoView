@@ -22,7 +22,7 @@ class Params {
         this.showSystemLoadInfo = true;
 
         /** уровень ярусно параллельной формы */
-        this.level = 0;
+        this.level = 1;
         this.showLevel = true;
 
         this.defaultLineWidth = 2.5;
@@ -251,6 +251,7 @@ class AlgoViewConfiguration {
             }
         };
 
+        const minLevel = 1;
         const maxLevel = graphInfo.characteristics.critical_path_length;
 
         const levelInc = function () {
@@ -262,7 +263,7 @@ class AlgoViewConfiguration {
         };
 
         const levelDec = function () {
-            if (thisContextTrans.params.level > 0) {
+            if (thisContextTrans.params.level > minLevel) {
                 thisContextTrans.params.level -= 1;
             }
 
@@ -270,13 +271,15 @@ class AlgoViewConfiguration {
         };
 
         const levelControllerObj = { levelInc: levelInc, levelDec: levelDec };
-        let prevLevelValue;
+        let prevLevelValue = minLevel;
 
         const updateLevelValue = function () {
             const floatLevelValue = thisContextTrans.params.level;
 
-            if (floatLevelValue < 0 || typeof floatLevelValue != "number") {
-                thisContextTrans.params.level = 0;
+            if (typeof floatLevelValue != "number") {
+                thisContextTrans.params.level = prevLevelValue;
+            } else if (floatLevelValue < minLevel) {
+                thisContextTrans.params.level = minLevel;
             } else if (floatLevelValue > maxLevel) {
                 thisContextTrans.params.level = maxLevel;
             } else if (floatLevelValue % 1 != 0) {
@@ -367,7 +370,7 @@ class AlgoViewConfiguration {
             .onChange(rebuildSceneCallback);
 
         const levelCounter = folderLevelControls
-            .add(this.params, "level", 0, maxLevel)
+            .add(this.params, "level", minLevel, maxLevel)
             .name("Level")
             .onChange(updateLevelValue);
 
@@ -524,7 +527,10 @@ class Graph {
         }
     }
 
-    // tmp
+    /**
+     * tmp solution
+     * TODO: убрать эту функцию
+     */
     shiftProblemVertices() {
         const context = this;
 
@@ -603,12 +609,15 @@ class Graph {
                 targetVertex
             );
 
+            // tmp solution
+            // TODO: получать уроверь ребра из json
+
             const edge = new Edge(
                 element.id,
                 sourceVertex,
                 targetVertex,
                 element.type,
-                element.level,
+                sourceVertex.level, // element.level,
                 requiresBending
             );
 
@@ -1580,23 +1589,28 @@ class View {
         // 1 - yellow
         // 2 - blue
         // 6 - red
-        const color =
-            config.params.showLevel && edge.level == config.params.level
-                ? 2
-                : 6;
+
+        // default
+        let color = 6;
+        let lineWidth = config.params.lineWidth;
+
+        if (config.params.showLevel && edge.level == config.params.level) {
+            color = 2;
+            lineWidth = config.params.lineWidth * 1.8;
+        }
 
         if (edge.requiresBending) {
             GraphicObjects.createCurvedArrow(
                 edge.sourceVertex.pos,
                 edge.targetVertex.pos,
-                config.params.lineWidth,
+                lineWidth,
                 color
             );
         } else {
             GraphicObjects.createStraightArrow(
                 edge.sourceVertex.pos,
                 edge.targetVertex.pos,
-                config.params.lineWidth,
+                lineWidth,
                 color
             );
         }
