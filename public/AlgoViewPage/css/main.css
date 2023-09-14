@@ -32,6 +32,16 @@ h1 {
     margin-bottom: 0.5em;
 }
 
+.layer {
+    overflow: auto; /* Добавляем полосы прокрутки */
+    overflow-x: hidden; /* Hide horizontal scrollbar */
+    /* overflow-y: hidden; /* Hide vertical scrollbar */
+    /* width: 300px;*/ /* Ширина блока */
+    height: 50vh; /* Высота блока */
+    /* padding: 0px;*/ /* Поля вокруг текста */
+    /* border: solid 0px black;*/ /* Параметры рамки */
+}
+
 #title {
     position: absolute;
     left: 20px;
