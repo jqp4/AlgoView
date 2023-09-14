@@ -16,7 +16,7 @@ using namespace logger;
 using namespace output_file_manager;
 using VarsMap = std::map<std::string, double>;
 int cur_block_shift = 0;
-int i_o_vertex_flag = 0;
+// int i_o_vertex_flag = 0;
 
 Block::Block(const BlockTagInfo& _block_info, int _block_number) {
     const auto& args = _block_info.get_args();
@@ -115,12 +115,19 @@ VertexId Block::create_vertex(VertexMapManager& vertices_manager,
     logger.log_info_msg("j = " + std::to_string(j) + " j_shift = " + std::to_string(j_shift_));
     logger.log_info_msg("k = " + std::to_string(j) + " k_shift = " + std::to_string(k_shift_));
 
-    Vertex* new_vertex_ptr =
-        new Vertex{block_id, i + i_shift_, j + j_shift_, k + k_shift_ + (cur_block_shift - local_block_shift_), type};
-    if (type != "0")
+    // Vertex* new_vertex_ptr =
+    //     new Vertex{block_id, i + i_shift_, j + j_shift_, k + k_shift_ + (cur_block_shift - local_block_shift_),
+    //     type};
+    Vertex* new_vertex_ptr;
+    if (type != "0") {
         graph_charact_manager.inc_vertices_counter();
-    else
-        i_o_vertex_flag = 1;
+        new_vertex_ptr = new Vertex{
+            block_id, i + i_shift_, j + j_shift_, k + k_shift_ + (cur_block_shift - local_block_shift_), 1, type};
+    } else {
+        // i_o_vertex_flag = 1;
+        new_vertex_ptr = new Vertex{
+            block_id, i + i_shift_, j + j_shift_, k + k_shift_ + (cur_block_shift - local_block_shift_), 0, type};
+    }
     VertexId new_vertex_id = vertices_manager.add_vertex(new_vertex_ptr);
     logger.log_info_msg("New vertex = " + std::to_string(new_vertex_id));
 
@@ -301,6 +308,7 @@ void change_levels_rec(const EdgeMapManager& edges_manager,
     edges_manager.get_target_vertex_ids(target_vertex_ids, vertex_id);
     if (target_vertex_ids.empty())
         return;
+
     std::string str;
     array_to_str(target_vertex_ids, str);
     logger.log_info_msg("Here are vertex ids which level must be changed : " + str);
@@ -413,10 +421,11 @@ void Block::main_cycle(const BlockTagInfo& block_info,
                             // if vertex has level = 0 these vertices are ignored, since level = 0 is not
                             // considered to be a part of the graph (extra part)
                             graph_charact_manager.inc_level_vertex_counter(level);
-                            if (i_o_vertex_flag)
-                                graph_charact_manager.add_critical_lenght(level - 1);
-                            else
-                                graph_charact_manager.add_critical_lenght(level);
+                            // if (i_o_vertex_flag)
+                            //     graph_charact_manager.add_critical_lenght(level - 1);
+                            // else
+                            //     graph_charact_manager.add_critical_lenght(level);
+                            graph_charact_manager.add_critical_lenght(level - 1);
                             logger.log_info_finish_msg("determining current vertex level");
                         }
                     }
