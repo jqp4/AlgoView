@@ -3,7 +3,7 @@
 const colors = [
     0xed6a5a, 0xf4f1bb, 0x9bc1bc, 0x5ca4a9, 0xe6ebe0, 0xf0b67f, 0xfe5f55,
     0xd6d1b1, 0xc7efcf, 0xeef5db, 0x50514f, 0xf25f5c, 0xffe066, 0x247ba0,
-    0x70c1b3,
+    0x70c1b3, 0xababab, 0xc2b851,
 ];
 
 const CameraTypes = {
@@ -26,7 +26,7 @@ class Params {
         this.showLevel = true;
         this.paintIO = false; // красить ли io объекты в цвет уровня
 
-        this.defaultLineWidth = 2.5;
+        this.defaultLineWidth = 3;
         this.lineWidth;
         this.axisLineWidth;
         this.setDefaultLineWidth();
@@ -258,17 +258,15 @@ class AlgoViewConfiguration {
         const levelInc = function () {
             if (thisContextTrans.params.level < maxLevel) {
                 thisContextTrans.params.level += 1;
+                levelCounter.setValue(thisContextTrans.params.level);
             }
-
-            levelCounter.setValue(thisContextTrans.params.level);
         };
 
         const levelDec = function () {
             if (thisContextTrans.params.level > minLevel) {
                 thisContextTrans.params.level -= 1;
+                levelCounter.setValue(thisContextTrans.params.level);
             }
-
-            levelCounter.setValue(thisContextTrans.params.level);
         };
 
         const levelControllerObj = { levelInc: levelInc, levelDec: levelDec };
@@ -289,7 +287,12 @@ class AlgoViewConfiguration {
 
             if (thisContextTrans.params.level != prevLevelValue) {
                 prevLevelValue = thisContextTrans.params.level;
-                rebuildSceneCallback();
+
+                if (thisContextTrans.params.showLevel) {
+                    rebuildSceneCallback();
+                } else {
+                    showLevelController.setValue(true);
+                }
             }
         };
 
@@ -365,9 +368,9 @@ class AlgoViewConfiguration {
          *      ==================
          */
 
-        folderLevelControls
+        const showLevelController = folderLevelControls
             .add(this.params, "showLevel")
-            .name("Show Level")
+            .name("Show levels")
             .onChange(rebuildSceneCallback);
 
         folderLevelControls
@@ -1559,6 +1562,8 @@ class View {
         // 6 - красный
         // 7 - темно желный
         // 8 - мятный. для входных
+        // 15 - темно серый
+        // 16 - золотой
 
         let color = 1; // дефолт
 
@@ -1567,7 +1572,7 @@ class View {
         } else if (config.params.showLevel) {
             if (vertex.level == config.params.level) {
                 color = 2;
-            } else if (vertex.level <= config.params.level) {
+            } else if (vertex.level < config.params.level) {
                 color = 4;
             }
         }
@@ -1665,24 +1670,21 @@ class View {
      * @param {Edge} edge - ребро, экземпляр класса `Edge`.
      */
     buildEdgeObject(edge) {
-        // 1 - yellow
-        // 2 - blue
-        // 6 - red
-
         // default
-        let color = 6;
+        let color = 15; // 6;
         let lineWidth = config.params.lineWidth;
         let dotted = false;
 
         if (edge.type == 0 && !config.params.paintIO) {
             // color = 8;
             // dotted = true;
-        } else if (
-            config.params.showLevel &&
-            edge.level == config.params.level
-        ) {
-            color = 2;
-            lineWidth = config.params.lineWidth * 1.7;
+        } else if (config.params.showLevel) {
+            if (edge.level == config.params.level) {
+                color = 6;
+                lineWidth = config.params.lineWidth * 1.4;
+            } else if (edge.level > config.params.level) {
+                color = 16;
+            }
         }
 
         if (edge.requiresBending) {
